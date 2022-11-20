@@ -1,5 +1,7 @@
 Date,Hours,Task
+-,10,Data exploration and analysis from before (I invested x times more hours but this is just a small acknowledgement)
 05.11.22,2.5,Usage analysis with my dad (the user of the visualization in the end)
 09.11.22,1,"Setup git repo, report structure and organize required files e.g. requirements for the project etc."
 13.11.22,1,Data exploration and analysis
 14.11.22,3,"Data exploration and analysis, playing around with Grafana to prototype"
+,2,Report (motiviation and data exploration/analysis)
