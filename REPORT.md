@@ -6,7 +6,7 @@
 
 ### Questions
 
-- how detailed should the data analysis/exploration part be?
+- how detailed should the data analysis/exploration part be? only the most important parts!
 
 ## Motivation
 
@@ -40,6 +40,10 @@ In the work summary, I have only written down hours for the data exploration and
 DVIZ was an intended primary beneficiary. For the analysis done specifically for other modules I have of
 course still taken the insights into account if they were relevant but did not count the hours towards
 this project.
+
+IMPORTANT: This is not the focus of the module and you must keep this at a minimum. Do not write this much.
+You should probably also not put as much time on the work sheet! But you need to include an explanation of the
+dataset e.g. in an additional file, and all data exploration and analysis done for DVIZ specifically.
 
 ### Meaning of variables
 
