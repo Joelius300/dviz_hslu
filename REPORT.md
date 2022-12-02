@@ -6,7 +6,8 @@
 
 ### Questions
 
-- how detailed should the data analysis/exploration part be? only the most important parts!
+- how detailed should the data analysis/exploration part be?
+  only the most important parts!
 
 ## Motivation
 
@@ -25,7 +26,7 @@ for firing up the furnance and the amount of wood we use.
 
 However, this dashboard I built is from a time where I understood very little about the heating unit and therefore it's
 just numbers on a screen without much thought behind them and also very boring from a visualization point of view. \
-With this project I would like to change this and learn how to correctly identify needs and how to build an
+With this project I would like to change this, learn how to correctly identify needs and how to build an
 intuitive and helpful visualization around the data I collected.
 
 The different components for extracting the data, storing it, making it consumable (API) and displaying it (web UI / dashboard),
