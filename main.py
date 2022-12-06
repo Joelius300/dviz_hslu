@@ -30,7 +30,7 @@ if __name__ == "__main__":
 #   (it can stay there longer than the buffer sure but it can't rise above the buffer max!)
 
 # Feedback:
-# - Danger zone -> alert
+# - Danger zone -> alert (just mention that, in the end this is a dashboard, not an app)
 # - Very clear indication to get an instruction without having to analyze the chart -> light signal (and maybe a time estimate)
 # - Shift data maybe by 1 year back so you have access to "future" values
 # - Compare summer and winter and try to analyze whether or not the the average is even meaningful (in winter)
