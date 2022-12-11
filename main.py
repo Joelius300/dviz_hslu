@@ -2,18 +2,80 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+from datetime import datetime, timedelta, time
+import pytz
 
 CSV_PATH = "data/heating-data_cleaned.csv"
+TIME_OFFSET = np.timedelta64(1, "Y")
+TIME = "received_time"
+DRINKING_WATER = "drinking_water"
+BUFFER_MAX = "buffer_max"
+BUFFER_MIN = "buffer_min"
+
+DEFAULT_DATE_OFFSET = timedelta(days=2)
+
+tz = pytz.timezone("Europe/Zurich")
 
 
 @st.cache
 def load_data():
     heating_data = pd.read_csv(CSV_PATH)
-    heating_data.index = pd.to_datetime(heating_data.pop('received_time'))
-    return heating_data
+    timestamps = pd.to_datetime(heating_data.pop(TIME), utc=True)
+    timestamps = timestamps + TIME_OFFSET
+    heating_data.index = timestamps
+    heating_data.index = heating_data.index.tz_convert(tz)
+    return heating_data.sort_index()
 
+
+@st.cache
+def earliest_time():
+    return load_data().index.min()
+
+
+today = datetime.utcnow().date()
 
 st.title("Heating unit")
+
+period_col, from_time_col, to_time_col = st.columns([2, 1, 1])
+
+with period_col:
+    date_period = st.date_input("Period",
+                                (today - DEFAULT_DATE_OFFSET, today),
+                                min_value=earliest_time(),
+                                max_value=today)
+
+with from_time_col:
+    time_from = st.time_input(
+        "Time from", value=time(hour=0, minute=0, second=0))
+
+with to_time_col:
+    time_to = st.time_input("Time to", value=time(
+        hour=23, minute=59, second=59), )
+
+date_from = date_period[0]
+if len(date_period) < 2:
+    date_to = date_from
+else:
+    date_to = date_period[1]
+
+period_from = datetime.combine(date_from, time_from)
+period_to = datetime.combine(date_to, time_to)
+period_from = period_from.astimezone(tz)
+period_to = period_to.astimezone(tz)
+
+
+col_stored_energy, col_drinking_water = st.columns(2)
+
+with col_stored_energy:
+    st.subheader("Stored energy")
+
+with col_drinking_water:
+    st.subheader("Drinking water")
+
+    data = load_data()[period_from:period_to]
+    st.plotly_chart(px.line(data, x=data.index,
+                    y=DRINKING_WATER, title="Chart title"),
+                    )
 
 
 # TODO
