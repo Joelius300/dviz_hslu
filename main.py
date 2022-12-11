@@ -3,6 +3,16 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 
+CSV_PATH = "data/heating-data_cleaned.csv"
+
+
+@st.cache
+def load_data():
+    heating_data = pd.read_csv(CSV_PATH)
+    heating_data.index = pd.to_datetime(heating_data.pop('received_time'))
+    return heating_data
+
+
 st.title("Heating unit")
 
 
