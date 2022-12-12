@@ -7,14 +7,36 @@ import pytz
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 TIME_OFFSET = np.timedelta64(1, "Y")
+tz = pytz.timezone("Europe/Zurich")
+
 TIME = "received_time"
 DRINKING_WATER = "drinking_water"
 BUFFER_MAX = "buffer_max"
 BUFFER_MIN = "buffer_min"
 
-DEFAULT_DATE_OFFSET = timedelta(days=2)
+TIME_LABEL = "Time"
+DRINKING_WATER_LABEL = "Drinking water"
+BUFFER_MAX_LABEL = "Buffer max"
+BUFFER_MIN_LABEL = "Buffer min"
 
-tz = pytz.timezone("Europe/Zurich")
+LABELS = {
+    TIME: TIME_LABEL,
+    DRINKING_WATER: DRINKING_WATER_LABEL,
+    BUFFER_MAX: BUFFER_MAX_LABEL,
+    BUFFER_MIN: BUFFER_MIN_LABEL
+}
+
+DRINKING_WATER_COLOR = "blue"
+BUFFER_MAX_COLOR = "orange"
+BUFFER_MIN_COLOR = "deepblue"
+
+COLORS = {
+    DRINKING_WATER: DRINKING_WATER_COLOR,
+    BUFFER_MAX: BUFFER_MAX_COLOR,
+    BUFFER_MIN: BUFFER_MIN_COLOR
+}
+
+DEFAULT_DATE_OFFSET = timedelta(days=2)
 
 
 @st.cache
@@ -63,18 +85,26 @@ period_to = datetime.combine(date_to, time_to)
 period_from = period_from.astimezone(tz)
 period_to = period_to.astimezone(tz)
 
+data = load_data()[period_from:period_to]
 
 col_stored_energy, col_drinking_water = st.columns(2)
 
 with col_stored_energy:
     st.subheader("Stored energy")
+    st.plotly_chart(px.line(data, x=data.index,
+                    y=BUFFER_MAX,
+                    labels=LABELS,
+                    color_discrete_map=COLORS),
+                    )
 
 with col_drinking_water:
     st.subheader("Drinking water")
 
-    data = load_data()[period_from:period_to]
+    # COLORS DON?T WORK THIS WAY!
     st.plotly_chart(px.line(data, x=data.index,
-                    y=DRINKING_WATER, title="Chart title"),
+                    y=DRINKING_WATER,
+                    labels=LABELS,
+                    color_discrete_map=COLORS),
                     )
 
 
