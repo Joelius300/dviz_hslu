@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime, timedelta, time
 import pytz
 
@@ -37,6 +38,10 @@ COLORS = {
 }
 
 DEFAULT_DATE_OFFSET = timedelta(days=2)
+DEFAULT_LOWER_THRESHOLD = 30
+DEFAULT_UPPER_THRESHOLD = 40
+
+st.set_page_config(layout="wide")
 
 
 @st.cache
@@ -58,7 +63,8 @@ today = datetime.utcnow().date()
 
 st.title("Heating unit")
 
-period_col, from_time_col, to_time_col = st.columns([2, 1, 1])
+period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = \
+    st.columns([2, 1, 1, 1, 1])
 
 with period_col:
     date_period = st.date_input("Period",
@@ -72,7 +78,7 @@ with from_time_col:
 
 with to_time_col:
     time_to = st.time_input("Time to", value=time(
-        hour=23, minute=59, second=59), )
+        hour=23, minute=59, second=59))
 
 date_from = date_period[0]
 if len(date_period) < 2:
@@ -85,28 +91,53 @@ period_to = datetime.combine(date_to, time_to)
 period_from = period_from.astimezone(tz)
 period_to = period_to.astimezone(tz)
 
+with lower_threshold_col:
+    lower_threshold = st.number_input(
+        "Lower threshold", min_value=20, max_value=50, value=DEFAULT_LOWER_THRESHOLD)
+
+with upper_threshold_col:
+    upper_threshold = st.number_input(
+        "Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
+    # TODO Constrain upper threshold to be above lower threshold
+
 data = load_data()[period_from:period_to]
+current = data.iloc[-1]
+since_index = max(0, len(data) - 60 * 1)
+earlier = data.iloc[since_index]
 
 col_stored_energy, col_drinking_water = st.columns(2)
 
 with col_stored_energy:
     st.subheader("Stored energy")
-    st.plotly_chart(px.line(data, x=data.index,
-                    y=BUFFER_MAX,
-                    labels=LABELS,
-                    color_discrete_map=COLORS),
-                    )
+    fig = px.line(data, x=data.index,
+                  y=BUFFER_MAX,
+                  labels=LABELS)
+    fig['data'][0]['line']['color'] = BUFFER_MAX_COLOR
+    st.plotly_chart(fig)
 
 with col_drinking_water:
     st.subheader("Drinking water")
 
-    # COLORS DON?T WORK THIS WAY!
-    st.plotly_chart(px.line(data, x=data.index,
-                    y=DRINKING_WATER,
-                    labels=LABELS,
-                    color_discrete_map=COLORS),
-                    )
+    fig = px.line(data, x=data.index,
+                  y=DRINKING_WATER,
+                  labels=LABELS)
 
+    fig['data'][0]['line']['color'] = DRINKING_WATER_COLOR
+    st.plotly_chart(fig)
+
+    # no plotly express for gauge
+    fig = go.Figure(go.Indicator(
+        domain={'x': [0, 1], 'y': [0, 1]},
+        value=current[DRINKING_WATER],
+        mode="gauge+number+delta",
+        title={'text': DRINKING_WATER_LABEL},
+        delta={'reference': earlier[DRINKING_WATER]},
+        gauge={'axis': {'range': [20, 60]},
+               'steps': [
+                   {'range': [0, lower_threshold], 'color': "red"},
+                   {'range': [lower_threshold, upper_threshold], 'color': "orange"}]
+               }))
+    st.plotly_chart(fig)
 
 # TODO
 # Line chart with average stored energy ((puffer oben + puffer unten) / 2) fan'd out to 50% on each site.
@@ -140,6 +171,16 @@ with col_drinking_water:
 #      distribution is unknown
 # - Maybe figure out which is more important for the decision, buffer max, buffer min or average.
 #   -> Dad says the max is (much) more important currently but the average might give interesting insight
+
+# Feedback 2:
+# Bar (gauge) chart 20-60 make sense? otherwise 0-100 maybe?
+# In the gauge maybe avoid the bar but use a symbol (point) instead, because the position is important, not the length
+# -> Only have the bar if it's length encodes something meaningful or not
+# Maybe read is too harsh but i think it would work if you explain why red is "emergency-like"
+# Split functions out into it's own module with the main.py only being for the dashboard/layouting/etc.
+# have plotly emit some events (custom streamlit plotly component) for the shared zoom
+# VISUALIZATION IS THE PART THAT MATTERS! not really ux or things like that, the viz has to make sense. focus on that!
+# -> this also means that shared zoom, localization, etc. is all lowest priority!
 
 # Questions I didnt ask:
 # - Visual buffer drawn next to it (probably not helpful or impressive, think we can ignore that)
