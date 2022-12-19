@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta, time
+
 import numpy as np
 import pandas as pd
-import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, timedelta, time
 import pytz
+import streamlit as st
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 TIME_OFFSET = np.timedelta64(1, "Y")
@@ -135,7 +136,8 @@ with col_drinking_water:
         gauge={'axis': {'range': [20, 60]},
                'steps': [
                    {'range': [0, lower_threshold], 'color': "red"},
-                   {'range': [lower_threshold, upper_threshold], 'color': "orange"}]
+                   {'range': [lower_threshold, upper_threshold], 'color': "orange"}],
+               'threshold': {'line': {'color': "white", 'width': 4}, 'thickness': 0.75, 'value': current[DRINKING_WATER]}
                }))
     st.plotly_chart(fig)
 
@@ -181,7 +183,11 @@ with col_drinking_water:
 # have plotly emit some events (custom streamlit plotly component) for the shared zoom
 # VISUALIZATION IS THE PART THAT MATTERS! not really ux or things like that, the viz has to make sense. focus on that!
 # -> this also means that shared zoom, localization, etc. is all lowest priority!
+# -> this extends to the constraint that the upper threshold is above the lower one
 
 # Questions I didnt ask:
 # - Visual buffer drawn next to it (probably not helpful or impressive, think we can ignore that)
 # - Conversion into kwh or smth like that but what out she's a physicist so it would have to be right and that's hard
+
+# Feedback vo dä studis
+# weniger kontrastende Farben also blau isch hert trash
