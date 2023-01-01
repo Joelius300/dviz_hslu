@@ -113,7 +113,10 @@ with col_stored_energy:
     fig = px.line(data, x=data.index,
                   y=BUFFER_MAX,
                   labels=LABELS)
+
     fig['data'][0]['line']['color'] = BUFFER_MAX_COLOR
+    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")
+    fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
     st.plotly_chart(fig)
 
 with col_drinking_water:
@@ -124,6 +127,8 @@ with col_drinking_water:
                   labels=LABELS)
 
     fig['data'][0]['line']['color'] = DRINKING_WATER_COLOR
+    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")
+    fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
     st.plotly_chart(fig)
 
     # no plotly express for gauge
