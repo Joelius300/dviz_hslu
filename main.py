@@ -2,41 +2,14 @@ from datetime import datetime, timedelta, time
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import pytz
 import streamlit as st
+
+from plots import create_temperature_line_chart, create_temperature_gauge, TIME, BUFFER_MAX, DRINKING_WATER
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 TIME_OFFSET = np.timedelta64(1, "Y")
 tz = pytz.timezone("Europe/Zurich")
-
-TIME = "received_time"
-DRINKING_WATER = "drinking_water"
-BUFFER_MAX = "buffer_max"
-BUFFER_MIN = "buffer_min"
-
-TIME_LABEL = "Time"
-DRINKING_WATER_LABEL = "Drinking water"
-BUFFER_MAX_LABEL = "Buffer max"
-BUFFER_MIN_LABEL = "Buffer min"
-
-LABELS = {
-    TIME: TIME_LABEL,
-    DRINKING_WATER: DRINKING_WATER_LABEL,
-    BUFFER_MAX: BUFFER_MAX_LABEL,
-    BUFFER_MIN: BUFFER_MIN_LABEL
-}
-
-DRINKING_WATER_COLOR = "blue"
-BUFFER_MAX_COLOR = "orange"
-BUFFER_MIN_COLOR = "deepblue"
-
-COLORS = {
-    DRINKING_WATER: DRINKING_WATER_COLOR,
-    BUFFER_MAX: BUFFER_MAX_COLOR,
-    BUFFER_MIN: BUFFER_MIN_COLOR
-}
 
 DEFAULT_DATE_OFFSET = timedelta(days=2)
 DEFAULT_LOWER_THRESHOLD = 30
@@ -45,11 +18,13 @@ DEFAULT_UPPER_THRESHOLD = 40
 st.set_page_config(layout="wide")
 
 
+# entire dataset is cached and held in memory.
+# if it was much bigger, periods with from/to could be cached instead.
 @st.cache
 def load_data():
     heating_data = pd.read_csv(CSV_PATH)
     timestamps = pd.to_datetime(heating_data.pop(TIME), utc=True)
-    timestamps = timestamps + TIME_OFFSET
+    timestamps = timestamps + TIME_OFFSET  # shift everything 1 year into the future to have fake prediction values
     heating_data.index = timestamps
     heating_data.index = heating_data.index.tz_convert(tz)
     return heating_data.sort_index()
@@ -103,47 +78,28 @@ with upper_threshold_col:
 
 data = load_data()[period_from:period_to]
 current = data.iloc[-1]
-since_index = max(0, len(data) - 60 * 1)
+since_index = max(0, len(data) - 60 * 1)  # todo this 60 * 1 should be a variable somewhere. some gauge delta time.
+# it also needs to be very obvious what that delta is in the visualization, either by text or/and indicator in the chart
 earlier = data.iloc[since_index]
 
 col_stored_energy, col_drinking_water = st.columns(2)
 
 with col_stored_energy:
     st.subheader("Stored energy")
-    fig = px.line(data, x=data.index,
-                  y=BUFFER_MAX,
-                  labels=LABELS)
 
-    fig['data'][0]['line']['color'] = BUFFER_MAX_COLOR
-    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")
-    fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
+    fig = create_temperature_gauge(current, earlier, BUFFER_MAX, lower_threshold, upper_threshold)
+    st.plotly_chart(fig)
+
+    fig = create_temperature_line_chart(data, BUFFER_MAX, lower_threshold, upper_threshold)
     st.plotly_chart(fig)
 
 with col_drinking_water:
     st.subheader("Drinking water")
 
-    fig = px.line(data, x=data.index,
-                  y=DRINKING_WATER,
-                  labels=LABELS)
-
-    fig['data'][0]['line']['color'] = DRINKING_WATER_COLOR
-    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")
-    fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
+    fig = create_temperature_gauge(current, earlier, DRINKING_WATER, lower_threshold, upper_threshold)
     st.plotly_chart(fig)
 
-    # no plotly express for gauge
-    fig = go.Figure(go.Indicator(
-        domain={'x': [0, 1], 'y': [0, 1]},
-        value=current[DRINKING_WATER],
-        mode="gauge+number+delta",
-        title={'text': DRINKING_WATER_LABEL},
-        delta={'reference': earlier[DRINKING_WATER]},
-        gauge={'axis': {'range': [20, 60]},
-               'steps': [
-                   {'range': [0, lower_threshold], 'color': "red"},
-                   {'range': [lower_threshold, upper_threshold], 'color': "orange"}],
-               'threshold': {'line': {'color': "white", 'width': 4}, 'thickness': 0.75, 'value': current[DRINKING_WATER]}
-               }))
+    fig = create_temperature_line_chart(data, DRINKING_WATER, lower_threshold, upper_threshold)
     st.plotly_chart(fig)
 
 # TODO
