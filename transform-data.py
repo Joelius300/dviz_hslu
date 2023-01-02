@@ -7,6 +7,7 @@ relevant_columns = [
     "boiler_1",
     "puffer_oben",
     "puffer_unten",
+    "betriebsphase_kessel"
     # there are tons of other interesting data points but for the
     # use cases defined for this project, these are enough.
 ]
@@ -20,7 +21,9 @@ column_mapping = {
 
 def load_data(path: str):
     df = pd.read_csv(path, usecols=relevant_columns)
-    return df.rename(columns=column_mapping)
+    df = df.rename(columns=column_mapping)
+    df['heating_up'] = df.pop('betriebsphase_kessel').isin([1, 2, 8])
+    return df
 
 
 def write_data(df: pd.DataFrame, path: str):
