@@ -88,13 +88,15 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
         # select correct prediction template; in summer it's much longer and less steep than in winter
         prediction_template = winter_pred if period_to.month < 5 or period_to.month >= 10 else summer_pred
         heating_up_row = during_heating_up.reset_index().iloc[0]
-        first_time_heating_up = heating_up_row[TIME]
-        # determine best matching point in the prediction template using the sum of squared errors
+        first_time_heating_up: datetime = heating_up_row[TIME]
+        # determine best matching point (time) in the prediction template using the sum of squared errors
         sse = (prediction_template[PREDICTED_COLUMNS] - heating_up_row[PREDICTED_COLUMNS]).pow(2).sum(axis=1)
-        best_matching_point_in_template = sse.idxmin()
+        best_match_in_template: datetime = sse.idxmin()
 
-        template_prediction_end_time = best_matching_point_in_template + PREDICTED_PERIOD
-        prediction_template = prediction_template[best_matching_point_in_template:template_prediction_end_time]
+        # template end time: from the best matching point, take data to complete the PREDICTED_PERIOD together with
+        # the real data (before heating up)
+        template_prediction_end_time = best_match_in_template + PREDICTED_PERIOD - (first_time_heating_up - period_to)
+        prediction_template = prediction_template[best_match_in_template:template_prediction_end_time]
         # move predicted times to the cut off point
         prediction_template.index = prediction_template.index - (prediction_template.index[0] - first_time_heating_up)
         # cut off from the point of first heating up and add prediction template from best matching time until the end
