@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 from plots import create_temperature_line_chart, create_temperature_gauge, TIME, BUFFER_MAX, DRINKING_WATER, LABELS
 
 CSV_PATH = "data/heating-data_cleaned.csv"
+SUMMER_PREDICTION_CSV_PATH = "data/summer_prediction.csv"
+WINTER_PREDICTION_CSV_PATH = "data/winter_prediction.csv"
 TIME_OFFSET = np.timedelta64(1, "Y")
 tz = pytz.timezone("Europe/Zurich")
 
@@ -17,7 +19,7 @@ DEFAULT_DATE_OFFSET = timedelta(days=2)
 DEFAULT_LOWER_THRESHOLD = 30
 DEFAULT_UPPER_THRESHOLD = 40
 
-PREDICTED_PERIOD = timedelta(days=3)
+PREDICTED_PERIOD = np.timedelta64(1, "D")
 
 st.set_page_config(layout="wide")
 
@@ -36,58 +38,53 @@ def load_data():
 
 
 @st.cache
+def load_predictions():
+    def load_prediction(path):
+        pred = pd.read_csv(path)
+        pred.index = pd.to_datetime(pred.pop(TIME), utc=True)
+        pred.index = pred.index.tz_convert(tz)
+        return pred
+
+    summer = load_prediction(SUMMER_PREDICTION_CSV_PATH)
+    winter = load_prediction(WINTER_PREDICTION_CSV_PATH)
+
+    return summer, winter
+
+
+@st.cache
 def earliest_time():
     return load_data().index.min()
 
 
-def get_period(period_from, period_to, iterations):
+def get_period(period_from, period_to):
+    period_from, period_to = pd.to_datetime(period_from), pd.to_datetime(period_to)
+
     data = load_data()[period_from:period_to]
-
-    prediction_end_time = pd.to_datetime(period_to + PREDICTED_PERIOD)
-    predicted = load_data()[period_to:prediction_end_time]
-    after_to = load_data()[period_to:]
-
     current = data.iloc[-1]
+    predicted = load_data()[period_to:period_to + PREDICTED_PERIOD]
 
-    print(f"Predicted length: {len(predicted)}")
-    for i in range(iterations):
-        heating_up = predicted.query("heating_up")["heating_up"]
-        if heating_up.empty:
-            print("No more heating up in this period, stop")
-            break
+    during_heating_up = predicted.query("heating_up")
+    # if the prediction contains a heating process, we want to replace that part of it with a pre-defined prediction.
+    # these pre-defined predictions are snippets of real data, namely in the places that go to the lowest temperature
+    # naturally in the dataset. This means every other progression ends descending (= starts heating up again)
+    # before the templates so the templates can be added onto the end without fear of not finding a continuation point.
+    predicted_columns = [BUFFER_MAX, DRINKING_WATER]
+    if not during_heating_up.empty:
+        summer_pred, winter_pred = load_predictions()
+        # select correct prediction template; in summer it's much longer and less steep than in winter
+        prediction_template = winter_pred if period_to.month < 5 or period_to.month >= 10 else summer_pred
+        heating_up_row = during_heating_up.reset_index().iloc[0]
+        first_time_heating_up = heating_up_row[TIME]
+        # determine best matching point in the prediction template using the sum of squared errors
+        SSE = (prediction_template[predicted_columns] - heating_up_row[predicted_columns]).pow(2).sum(axis=1)
+        best_matching_point_in_template = SSE.idxmin()
 
-        first_time_heating_up = heating_up.index[0]
-        last_not_heating_up = predicted.query(f'index < \'{first_time_heating_up}\'').iloc[-1]
-        after_start_heating = after_to[first_time_heating_up:]
-        times_it_changes = after_start_heating.query("not heating_up and heating_up_prev")
-
-        if times_it_changes.empty:
-            print(f"Heating state never changes during {after_start_heating.index[0]} to {after_start_heating.index[-1]}, stop")
-            break
-
-        done_heating_up_time = times_it_changes.index[0]
-
-        after_done_heating = after_to[done_heating_up_time:]
-        squared_difference = ((after_done_heating.query("not heating_up")[[BUFFER_MAX, DRINKING_WATER]] - last_not_heating_up[[BUFFER_MAX, DRINKING_WATER]])).pow(2).sum(axis=1)
-        continuation_time = (squared_difference - after_done_heating["hours_to_next_heating"]).idxmin()
-        delta_cut_out = continuation_time - first_time_heating_up
-        matching_period = after_to[continuation_time:prediction_end_time+delta_cut_out]
-        matching_period = matching_period.set_index(matching_period.index - delta_cut_out)
-
-        print(f'Heating from {first_time_heating_up} to {done_heating_up_time}, cutting out {delta_cut_out} and replacing it with {continuation_time} (lowest SSE from BUF={last_not_heating_up[BUFFER_MAX]},DRI={last_not_heating_up[DRINKING_WATER]})')
-
-        up_to_first_time_heating_up = predicted[:first_time_heating_up].iloc[:-1]
-        predicted = pd.concat([up_to_first_time_heating_up, matching_period])
-
-        # this kinda works now
-        # however, it always takes the smallest difference, no matter how little that helps
-        # you could add a guard that you only allow adding those where the time until the next
-        # heating up is greater than 1 hour or so. But it would probably be better to just add something
-        # to the SSE like 1/time_to_next_heating_up because more time = better but we take the min because
-        # of the error. or just subtract in hours or so? This way those that give longer additions are favoured. Mabybe?
-        # In the end, it's probably best to just store a fixed example progression, probably the one that goes to the
-        # lowest temperature ever recorded in the dataset. Then you just find the best match in this progression
-        # and take from there until the end. If it's not long enough, you repeat the lowest temperature until the end.
+        prediction_end_time = best_matching_point_in_template + PREDICTED_PERIOD
+        prediction_template = prediction_template[best_matching_point_in_template:prediction_end_time]
+        # move predicted times to the cut off point
+        prediction_template.index = prediction_template.index - (prediction_template.index[0] - first_time_heating_up)
+        # cut off from the point of first heating up and add prediction template from best matching time until the end
+        predicted = pd.concat([predicted[:first_time_heating_up].iloc[:-1], prediction_template])
 
     return current, data, predicted
 
@@ -147,9 +144,7 @@ with upper_threshold_col:
         "Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
     # TODO Constrain upper threshold to be above lower threshold
 
-iterations = st.number_input("Iterations", min_value=0, max_value=1000, value=1)
-
-current, data, predicted = get_period(period_from, period_to, iterations)
+current, data, predicted = get_period(period_from, period_to)
 
 since_index = max(0, len(data) - 60 * 1)  # todo this 60 * 1 should be a variable somewhere. some gauge delta time.
 # it also needs to be very obvious what that delta is in the visualization, either by text or/and indicator in the chart
