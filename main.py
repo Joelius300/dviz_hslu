@@ -81,8 +81,8 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
     during_heating_up = predicted.query("heating_up")
     # if the prediction contains a heating process, we want to replace that part of it with a pre-defined prediction.
     # these pre-defined predictions are snippets of real data, namely in the places that go to the lowest temperature
-    # naturally in the dataset. This means every other progression ends descending (= starts heating up again)
-    # before the templates so the templates can be added onto the end without fear of not finding a continuation point.
+    # naturally in the dataset. This means every other progression ends descending (= starts heating up again) before
+    # the templates so the templates can be added onto the end with less fear of not finding a continuation point.
     if not during_heating_up.empty:
         summer_pred, winter_pred = load_prediction_templates()
         # select correct prediction template; in summer it's much longer and less steep than in winter
