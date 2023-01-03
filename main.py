@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, time
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,10 @@ st.set_page_config(layout="wide")
 # if it was much bigger, periods with from/to could be cached instead.
 @st.cache
 def load_data():
+    """
+    Loads and prepares the dataset. Times are shifted by 1 year to get data from early 2021 to late 2023
+    which allows for fake-predictions using real data and still allows exploration in the past.
+    """
     heating_data = pd.read_csv(CSV_PATH)
     timestamps = pd.to_datetime(heating_data.pop(TIME), utc=True)
     timestamps = timestamps + TIME_OFFSET  # shift everything 1 year into the future to have fake prediction values
@@ -42,7 +47,8 @@ def load_data():
 @st.cache
 def load_prediction_templates():
     """Loads the prediction templates for summer and winter (returned in a 2-tuple in that order)."""
-    def load_prediction(path):
+
+    def load_prediction(path) -> pd.DataFrame:
         pred = pd.read_csv(path)
         pred.index = pd.to_datetime(pred.pop(TIME), utc=True)
         pred.index = pred.index.tz_convert(tz)
@@ -55,12 +61,12 @@ def load_prediction_templates():
 
 
 @st.cache
-def earliest_time():
+def earliest_time() -> datetime:
     """Returns the earliest recorded time in the dataset."""
     return load_data().index.min()
 
 
-def get_period(period_from, period_to):
+def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, pd.DataFrame, pd.DataFrame]:
     """
     Fetches data in a certain period of time including a forecast prediction right after the end of the period.
     :param period_from: Timestamp for the start of the period.
@@ -99,7 +105,9 @@ def get_period(period_from, period_to):
     return current, data, predicted
 
 
-def projected_hit_times(data, predicted, lower_threshold, upper_threshold):
+def projected_hit_times(data: pd.DataFrame, predicted: pd.DataFrame,
+                        lower_threshold: float | int,
+                        upper_threshold: float | int):
     """
     Returns the projected (or past) times when values first passed the thresholds.
     :param data: The past data in the period just before the predicted data.
@@ -112,25 +120,25 @@ def projected_hit_times(data, predicted, lower_threshold, upper_threshold):
     HIT_POINT_DETECTION_PAST_OFFSET of the past data, then the value is NULL.
     """
 
-    def projected_hit_times_core(predicted, lower_threshold, upper_threshold):
-        hit_times = {}
+    def projected_hit_times_core(period: pd.DataFrame):
+        hit_times: dict[str, list[Optional[datetime], Optional[datetime]]] = {}
         for col in PREDICTED_COLUMNS:
-            below_upper = predicted.query(f'{col} < {upper_threshold}').first_valid_index()
-            below_lower = predicted.query(f'{col} < {lower_threshold}').first_valid_index()
+            below_upper = period.query(f'{col} < {upper_threshold}').first_valid_index()
+            below_lower = period.query(f'{col} < {lower_threshold}').first_valid_index()
             hit_times[col] = [below_upper, below_lower]
 
         return hit_times
 
-    hit_times = projected_hit_times_core(predicted, lower_threshold, upper_threshold)
+    hit_times = projected_hit_times_core(predicted)
 
     # if the projected hit point is the first possible point, chances are the hit point was actually in the past.
     # so query that and adjust accordingly if necessary.
-    first_predicted_time = predicted.index[0]
+    first_predicted_time: datetime = predicted.index[0]
     # query only for upper here because upper must be crossed before lower
     first_hitters = [kv for kv in hit_times.items() if kv[1][0] == first_predicted_time]
     if first_hitters:
         past_data = data[first_predicted_time + HIT_POINT_DETECTION_PAST_OFFSET:]
-        past_hit_times = projected_hit_times_core(past_data, lower_threshold, upper_threshold)
+        past_hit_times = projected_hit_times_core(past_data)
         for key, _value in first_hitters:
             # use the past one instead for the first hitters, if there are any
             if past_hit_times[key][0]:
