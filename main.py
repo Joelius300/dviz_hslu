@@ -5,8 +5,6 @@ import numpy as np
 import pandas as pd
 import pytz
 import streamlit as st
-import plotly.express as px
-import plotly.graph_objects as go
 
 from plots import create_temperature_line_chart, create_temperature_gauge, TIME, BUFFER_MAX, DRINKING_WATER, LABELS
 
@@ -92,8 +90,8 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
         heating_up_row = during_heating_up.reset_index().iloc[0]
         first_time_heating_up = heating_up_row[TIME]
         # determine best matching point in the prediction template using the sum of squared errors
-        SSE = (prediction_template[PREDICTED_COLUMNS] - heating_up_row[PREDICTED_COLUMNS]).pow(2).sum(axis=1)
-        best_matching_point_in_template = SSE.idxmin()
+        sse = (prediction_template[PREDICTED_COLUMNS] - heating_up_row[PREDICTED_COLUMNS]).pow(2).sum(axis=1)
+        best_matching_point_in_template = sse.idxmin()
 
         template_prediction_end_time = best_matching_point_in_template + PREDICTED_PERIOD
         prediction_template = prediction_template[best_matching_point_in_template:template_prediction_end_time]
@@ -153,8 +151,7 @@ today = datetime.utcnow().date()
 
 st.title("Heating unit")
 
-period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = \
-    st.columns([2, 1, 1, 1, 1])
+period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = st.columns([2, 1, 1, 1, 1])
 
 with period_col:
     date_period = st.date_input("Period",
@@ -163,12 +160,10 @@ with period_col:
                                 max_value=today)
 
 with from_time_col:
-    time_from = st.time_input(
-        "Time from", value=time(hour=0, minute=0, second=0))
+    time_from = st.time_input("Time from", value=time(0, 0, 0))
 
 with to_time_col:
-    time_to = st.time_input("Time to", value=time(
-        hour=23, minute=59, second=59))
+    time_to = st.time_input("Time to", value=time(23, 59, 59))
 
 date_from = date_period[0]
 if len(date_period) < 2:
@@ -182,12 +177,10 @@ period_from = period_from.astimezone(tz)
 period_to = period_to.astimezone(tz)
 
 with lower_threshold_col:
-    lower_threshold = st.number_input(
-        "Lower threshold", min_value=20, max_value=50, value=DEFAULT_LOWER_THRESHOLD)
+    lower_threshold = st.number_input("Lower threshold", min_value=20, max_value=50, value=DEFAULT_LOWER_THRESHOLD)
 
 with upper_threshold_col:
-    upper_threshold = st.number_input(
-        "Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
+    upper_threshold = st.number_input("Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
     # TODO Constrain upper threshold to be above lower threshold
 
 current, data, predicted = get_period(period_from, period_to)
@@ -206,10 +199,7 @@ with col_stored_energy:
     # fig = create_temperature_gauge(current, earlier, BUFFER_MAX, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, BUFFER_MAX, lower_threshold, upper_threshold)
-    fig.add_trace(
-        go.Scatter(x=predicted.index, y=predicted[BUFFER_MAX], mode="lines", line=go.scatter.Line(color="red"),
-                   showlegend=False))
+    fig = create_temperature_line_chart(data, predicted, BUFFER_MAX, lower_threshold, upper_threshold)
     st.plotly_chart(fig)
 
 with col_drinking_water:
@@ -218,10 +208,7 @@ with col_drinking_water:
     # fig = create_temperature_gauge(current, earlier, DRINKING_WATER, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, DRINKING_WATER, lower_threshold, upper_threshold)
-    fig.add_trace(
-        go.Scatter(x=predicted.index, y=predicted[DRINKING_WATER], mode="lines", line=go.scatter.Line(color="red"),
-                   showlegend=False))
+    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, lower_threshold, upper_threshold)
     st.plotly_chart(fig)
 
 # TODO
@@ -261,7 +248,7 @@ with col_drinking_water:
 # Bar (gauge) chart 20-60 make sense? otherwise 0-100 maybe?
 # In the gauge maybe avoid the bar but use a symbol (point) instead, because the position is important, not the length
 # -> Only have the bar if it's length encodes something meaningful or not
-# Maybe read is too harsh but i think it would work if you explain why red is "emergency-like"
+# Maybe red is too harsh but i think it would work if you explain why red is "emergency-like"
 # Split functions out into it's own module with the main.py only being for the dashboard/layouting/etc.
 # have plotly emit some events (custom streamlit plotly component) for the shared zoom
 # VISUALIZATION IS THE PART THAT MATTERS! not really ux or things like that, the viz has to make sense. focus on that!

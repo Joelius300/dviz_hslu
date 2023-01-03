@@ -29,12 +29,18 @@ COLORS = {
 }
 
 
-def create_temperature_line_chart(data, column, lower_threshold, upper_threshold):
+def create_temperature_line_chart(data, predicted, column, lower_threshold, upper_threshold):
     fig = px.line(data, x=data.index, y=column, labels=LABELS)
 
     fig['data'][0]['line']['color'] = COLORS[column]
     fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")
     fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
+    fig.add_trace(
+        go.Scatter(x=predicted.index,
+                   y=predicted[column],
+                   mode="lines",
+                   line=go.scatter.Line(color="red"),  # TODO different color OR the fanning
+                   showlegend=False))
 
     return fig
 
