@@ -19,7 +19,9 @@ DEFAULT_DATE_OFFSET = timedelta(days=2)
 DEFAULT_LOWER_THRESHOLD = 30
 DEFAULT_UPPER_THRESHOLD = 40
 
-PREDICTED_PERIOD = np.timedelta64(1, "D")
+PREDICTED_PERIOD = np.timedelta64(3, "D")
+PREDICTED_COLUMNS = [BUFFER_MAX, DRINKING_WATER]
+HIT_POINT_DETECTION_PAST_OFFSET = np.timedelta64(-1, "D")
 
 st.set_page_config(layout="wide")
 
@@ -68,7 +70,6 @@ def get_period(period_from, period_to):
     # these pre-defined predictions are snippets of real data, namely in the places that go to the lowest temperature
     # naturally in the dataset. This means every other progression ends descending (= starts heating up again)
     # before the templates so the templates can be added onto the end without fear of not finding a continuation point.
-    predicted_columns = [BUFFER_MAX, DRINKING_WATER]
     if not during_heating_up.empty:
         summer_pred, winter_pred = load_predictions()
         # select correct prediction template; in summer it's much longer and less steep than in winter
@@ -76,7 +77,7 @@ def get_period(period_from, period_to):
         heating_up_row = during_heating_up.reset_index().iloc[0]
         first_time_heating_up = heating_up_row[TIME]
         # determine best matching point in the prediction template using the sum of squared errors
-        SSE = (prediction_template[predicted_columns] - heating_up_row[predicted_columns]).pow(2).sum(axis=1)
+        SSE = (prediction_template[PREDICTED_COLUMNS] - heating_up_row[PREDICTED_COLUMNS]).pow(2).sum(axis=1)
         best_matching_point_in_template = SSE.idxmin()
 
         prediction_end_time = best_matching_point_in_template + PREDICTED_PERIOD
@@ -89,17 +90,42 @@ def get_period(period_from, period_to):
     return current, data, predicted
 
 
-def projected_hit_times(to, lower_threshold, upper_threshold):
-    predicted = load_data()[to:]
-    buffer_below_upper = predicted.query(f'{BUFFER_MAX} < {upper_threshold}').index[0]
-    buffer_below_lower = predicted.query(f'{BUFFER_MAX} < {lower_threshold}').index[0]
-    drinking_water_below_upper = predicted.query(f'{DRINKING_WATER} < {upper_threshold}').index[0]
-    drinking_water_below_lower = predicted.query(f'{DRINKING_WATER} < {lower_threshold}').index[0]
+def projected_hit_times(data, predicted, lower_threshold, upper_threshold):
+    """
+    Returns the projected (or past) times when values first passed the thresholds.
+    :param data: The past data in the period just before the predicted data.
+    :param predicted: The predicted data in the period just after the past data.
+    :param lower_threshold: The lower threshold to cross.
+    :param upper_threshold: The upper threshold to cross.
+    :return: A dictionary with one entry per PREDICTED_COLUMNS. Each entry has a list with 2 values
+    where the first one is the time it first crossed the upper threshold, and the second when it first
+    crossed the lower threshold. If it didn't cross the threshold in the predicted data, or in
+    HIT_POINT_DETECTION_PAST_OFFSET of the past data, then the value is NULL.
+    """
+    def projected_hit_times_core(predicted, lower_threshold, upper_threshold):
+        hit_times = {}
+        for col in PREDICTED_COLUMNS:
+            below_upper = predicted.query(f'{col} < {upper_threshold}').first_valid_index()
+            below_lower = predicted.query(f'{col} < {lower_threshold}').first_valid_index()
+            hit_times[col] = [below_upper, below_lower]
 
-    return {
-        BUFFER_MAX: [buffer_below_upper, buffer_below_lower],
-        DRINKING_WATER: [drinking_water_below_upper, drinking_water_below_lower]
-    }
+        return hit_times
+
+    hit_times = projected_hit_times_core(predicted, lower_threshold, upper_threshold)
+    first_predicted_time = predicted.index[0]
+    first_hitters = list(filter(lambda kv: kv[1][0] == first_predicted_time, hit_times.items()))
+    # if the projected hit point is the first possible point, chances are the hit point was actually in the past
+    if first_hitters:
+        past_data = data[first_predicted_time + HIT_POINT_DETECTION_PAST_OFFSET:]
+        past_hit_times = projected_hit_times_core(past_data, lower_threshold, upper_threshold)
+        for key, _value in first_hitters:
+            # use the past one instead for the first hitters, if there are any
+            if past_hit_times[key][0]:
+                hit_times[key][0] = past_hit_times[key][0]
+            if past_hit_times[key][1]:
+                hit_times[key][1] = past_hit_times[key][1]
+
+    return hit_times
 
 
 today = datetime.utcnow().date()
@@ -108,7 +134,6 @@ st.title("Heating unit")
 
 period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = \
     st.columns([2, 1, 1, 1, 1])
-# st.columns(5)
 
 with period_col:
     date_period = st.date_input("Period",
@@ -150,7 +175,7 @@ since_index = max(0, len(data) - 60 * 1)  # todo this 60 * 1 should be a variabl
 # it also needs to be very obvious what that delta is in the visualization, either by text or/and indicator in the chart
 earlier = data.iloc[since_index]
 
-# st.write(projected_hit_times(period_to, lower_threshold, upper_threshold))
+st.write(projected_hit_times(data, predicted, lower_threshold, upper_threshold))
 
 col_stored_energy, col_drinking_water = st.columns(2)
 
