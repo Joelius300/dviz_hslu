@@ -40,7 +40,8 @@ def load_data():
 
 
 @st.cache
-def load_predictions():
+def load_prediction_templates():
+    """Loads the prediction templates for summer and winter (returned in a 2-tuple in that order)."""
     def load_prediction(path):
         pred = pd.read_csv(path)
         pred.index = pd.to_datetime(pred.pop(TIME), utc=True)
@@ -55,10 +56,18 @@ def load_predictions():
 
 @st.cache
 def earliest_time():
+    """Returns the earliest recorded time in the dataset."""
     return load_data().index.min()
 
 
 def get_period(period_from, period_to):
+    """
+    Fetches data in a certain period of time including a forecast prediction right after the end of the period.
+    :param period_from: Timestamp for the start of the period.
+    :param period_to: Timestamp for the end of the period.
+    :return: A 3-tuple with the current value (at period end), the past data (during period) and
+    predicted data (after period).
+    """
     period_from, period_to = pd.to_datetime(period_from), pd.to_datetime(period_to)
 
     data = load_data()[period_from:period_to]
@@ -71,7 +80,7 @@ def get_period(period_from, period_to):
     # naturally in the dataset. This means every other progression ends descending (= starts heating up again)
     # before the templates so the templates can be added onto the end without fear of not finding a continuation point.
     if not during_heating_up.empty:
-        summer_pred, winter_pred = load_predictions()
+        summer_pred, winter_pred = load_prediction_templates()
         # select correct prediction template; in summer it's much longer and less steep than in winter
         prediction_template = winter_pred if period_to.month < 5 or period_to.month >= 10 else summer_pred
         heating_up_row = during_heating_up.reset_index().iloc[0]
@@ -80,8 +89,8 @@ def get_period(period_from, period_to):
         SSE = (prediction_template[PREDICTED_COLUMNS] - heating_up_row[PREDICTED_COLUMNS]).pow(2).sum(axis=1)
         best_matching_point_in_template = SSE.idxmin()
 
-        prediction_end_time = best_matching_point_in_template + PREDICTED_PERIOD
-        prediction_template = prediction_template[best_matching_point_in_template:prediction_end_time]
+        template_prediction_end_time = best_matching_point_in_template + PREDICTED_PERIOD
+        prediction_template = prediction_template[best_matching_point_in_template:template_prediction_end_time]
         # move predicted times to the cut off point
         prediction_template.index = prediction_template.index - (prediction_template.index[0] - first_time_heating_up)
         # cut off from the point of first heating up and add prediction template from best matching time until the end
@@ -102,6 +111,7 @@ def projected_hit_times(data, predicted, lower_threshold, upper_threshold):
     crossed the lower threshold. If it didn't cross the threshold in the predicted data, or in
     HIT_POINT_DETECTION_PAST_OFFSET of the past data, then the value is NULL.
     """
+
     def projected_hit_times_core(predicted, lower_threshold, upper_threshold):
         hit_times = {}
         for col in PREDICTED_COLUMNS:
@@ -112,9 +122,12 @@ def projected_hit_times(data, predicted, lower_threshold, upper_threshold):
         return hit_times
 
     hit_times = projected_hit_times_core(predicted, lower_threshold, upper_threshold)
+
+    # if the projected hit point is the first possible point, chances are the hit point was actually in the past.
+    # so query that and adjust accordingly if necessary.
     first_predicted_time = predicted.index[0]
-    first_hitters = list(filter(lambda kv: kv[1][0] == first_predicted_time, hit_times.items()))
-    # if the projected hit point is the first possible point, chances are the hit point was actually in the past
+    # query only for upper here because upper must be crossed before lower
+    first_hitters = [kv for kv in hit_times.items() if kv[1][0] == first_predicted_time]
     if first_hitters:
         past_data = data[first_predicted_time + HIT_POINT_DETECTION_PAST_OFFSET:]
         past_hit_times = projected_hit_times_core(past_data, lower_threshold, upper_threshold)
