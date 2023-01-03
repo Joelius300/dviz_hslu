@@ -58,10 +58,6 @@ A few of the hours for this are included in the blanket data analysis work entry
 Below are the determined meanings of the columns I believe might be important or interesting for the dashboard.
 
 - received_time: Time my system received this state of the heating unit in UTC
-- kessel: Temperature of the water inside the furnance in °C
-- abgas: Temperature of exhaust gasses in °C
-- co2_soll: Target value of CO2 percentage.
-- co2_ist: Actual CO2 percentage. Can be transformed into residual oxygen percentage with formula: O2 = 20.942 - CO2 * 20.942 / 20.35 (note that 20.942=O2 max and 20.35 CO2 max for wood).
 - puffer_oben: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending). Used for determining the stored energy.
 - puffer_unten: ditto but lowest point of the buffer (usally lowest temperature)
 - betriebsphase_kessel: Phase of the furnance: 
@@ -74,18 +70,7 @@ Below are the determined meanings of the columns I believe might be important or
   - These are not used apparently: 3,5,7
   - "Lid open" (Tür geöffnet) exists according to the manual but the phase doesn't actually change when the lid is opened; can be fully replaced by DI_2
   - "Gluterhaltung" and "Übertemperatur" I don't know but they're probably not in the data either.
-- aussen: Temperature of sensor outside the house in °C (important note: sensor must not be reachable by the sun)
-- vorlauf_hk1_ist: Current temperature of water just leaving the furnance or buffer to go to heating circuit 1 (radiators)
-- vorlauf_hk1_soll: ditto but target value instead of current value
-- betriebsphase_hk1: Phase of heating circuit 1 (radiators) (needs more analysis)
-- vorlauf_hk2_ist: See hk1 but for heating circuit 2 (underfloor heating)
-- vorlauf_hk2_soll: ditto
-- betriebsphase_hk2: ditto
 - boiler_1: Temperature of water inside boiler in °C (top)
-- di_2: True=Primary lid closed, False=Primary lid open (the primary lid is where the wood is put in)
-- a_w_0: Motor of secondary air lid (True=lid open)
-- a_w_1: Motor of primary air lid (True=lid open)
-- a_phase_0: Smoke suction fan (True=on) (Saugzuggebläse)
 
 
 ## Target audience
