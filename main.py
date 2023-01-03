@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, time
 import streamlit as st
 
 from data import earliest_time, get_period, projected_hit_times
-from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER
+from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase
 from project_constants import PROJECT_TITLE, PROJECT_TIMEZONE
 
 DEFAULT_DATE_OFFSET = timedelta(days=2)
@@ -54,7 +54,9 @@ since_index = max(0, len(data) - 60 * 1)  # todo this 60 * 1 should be a variabl
 # it also needs to be very obvious what that delta is in the visualization, either by text or/and indicator in the chart
 earlier = data.iloc[since_index]
 
-st.write(projected_hit_times(data, predicted, lower_threshold, upper_threshold))
+hit_times = projected_hit_times(data, predicted, lower_threshold, upper_threshold)
+st.write(construct_action_phrase(hit_times, period_to, lower_threshold, upper_threshold))
+st.write(hit_times)
 
 col_stored_energy, col_drinking_water = st.columns(2)
 

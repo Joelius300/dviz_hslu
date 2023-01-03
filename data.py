@@ -7,6 +7,7 @@ import streamlit as st
 
 from plots import BUFFER_MAX, DRINKING_WATER, TIME
 from project_constants import PROJECT_TIMEZONE
+from shared import is_in_winter_mode, HitTimes
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 SUMMER_PREDICTION_CSV_PATH = "data/summer_prediction.csv"
@@ -81,7 +82,7 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
     if not during_heating_up.empty:
         summer_pred, winter_pred = load_prediction_templates()
         # select correct prediction template; in summer it's much longer and less steep than in winter
-        prediction_template = winter_pred if period_to.month < 5 or period_to.month >= 10 else summer_pred
+        prediction_template = winter_pred if is_in_winter_mode(period_to) else summer_pred
         heating_up_row = during_heating_up.reset_index().iloc[0]
         first_time_heating_up: datetime = heating_up_row[TIME]
         # determine best matching point (time) in the prediction template using the sum of squared errors
@@ -117,7 +118,7 @@ def projected_hit_times(data: pd.DataFrame, predicted: pd.DataFrame,
     """
 
     def projected_hit_times_core(period: pd.DataFrame):
-        hit_times: dict[str, list[Optional[datetime], Optional[datetime]]] = {}
+        hit_times: HitTimes = {}
         for col in PREDICTED_COLUMNS:
             below_upper = period.query(f'{col} < {upper_threshold}').first_valid_index()
             below_lower = period.query(f'{col} < {lower_threshold}').first_valid_index()

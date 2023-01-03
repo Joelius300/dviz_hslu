@@ -9,3 +9,6 @@ Date,Hours,Task
 06.12.22,1.5,Prototyping on paper (with new feedback)
 11.12.22,3,Start implementing with Streamlit (data prep and loading)
 12.12.22,3,Streamlit and Plotly implementation
+01.01.23,0.5,Streamlit and Plotly implementation (thresholds)
+02.01.23,6,Streamlit and Plotly implementation (predictions)
+03.01.23,6,Streamlit and Plotly implementation (predictions)
