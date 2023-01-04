@@ -56,7 +56,6 @@ earlier = data.iloc[since_index]
 
 hit_times = projected_hit_times(data, predicted, lower_threshold, upper_threshold)
 st.write(construct_action_phrase(hit_times, period_to, lower_threshold, upper_threshold))
-st.write(hit_times)
 
 col_stored_energy, col_drinking_water = st.columns(2)
 

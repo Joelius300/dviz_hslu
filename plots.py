@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from numbers import Number
 
 import humanize
 import plotly.express as px
@@ -69,21 +70,41 @@ def create_temperature_gauge(current, earlier, column, lower_threshold, upper_th
     return fig
 
 
-def construct_action_phrase(hit_times: HitTimes, current_time: datetime, lower_threshold, upper_threshold):
+def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
+                            lower_threshold: Number, upper_threshold: Number):
+    """
+    Constructs a phrase (str) describing the recommended action with relative times and additional information.
+
+    :param hit_times: The projected hit times (return value of projected_hit_times())
+    :param current_time: The (simulated) current time -> end of selected period
+    :param lower_threshold: The lower threshold to cross. Must be the same threshold used for calculating hit_times.
+    :param upper_threshold: The upper threshold to cross. Must be the same threshold used for calculating hit_times.
+    :return: A human-readable phrase in the form of a string.
+    """
     relevant_column = BUFFER_MAX if is_in_winter_mode(current_time) else DRINKING_WATER
     relevant_label = LABELS[relevant_column]
     relevant_hit_times = hit_times[relevant_column]
 
-    def fmt_delta(time):  # format delta from current time (simulated current time; end of selected period)
+    def fmt_delta(time: datetime):  # format delta from current time (simulated current time = end of selected period)
         return humanize.naturaltime(time, when=current_time)
 
-    low_hit = relevant_hit_times[1]
+    def fmt_cross_phrase(threshold_label: str, threshold: Number, hit: datetime):
+        verb = "fell" if hit < current_time else "will fall"
+        hit_delta = fmt_delta(hit)
+        return f"{relevant_label} {verb} below the {threshold_label} threshold ({threshold} °C) {hit_delta}."
+
+    action_phrase = "No immediate action necessary."
+
+    [high_hit, low_hit] = relevant_hit_times
     if low_hit:
-        verb = "fell" if low_hit < current_time else "will fall"
-        hit_delta = fmt_delta(low_hit)
         fire_up_time = low_hit - SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS
         fire_up_delta = fmt_delta(fire_up_time) if fire_up_time >= current_time else "as soon as possible"
 
-        return f"You should fire up **{fire_up_delta}**. {relevant_label} {verb} below the lower threshold ({lower_threshold} °C) {hit_delta}. "
+        action_phrase = f"You should fire up **{fire_up_delta}**."
+        cross_phrase = fmt_cross_phrase("lower", lower_threshold, low_hit)
+    elif high_hit:
+        cross_phrase = fmt_cross_phrase("upper", upper_threshold, high_hit)
+    else:
+        return action_phrase
 
-    # TODO doesn't hit low in prediction but high? Not sure if it happens but should probably implement something
+    return f"{action_phrase} {cross_phrase}"
