@@ -5,13 +5,19 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from plots import BUFFER_MAX, DRINKING_WATER, TIME
 from project_constants import PROJECT_TIMEZONE
 from shared import is_in_winter_mode, HitTimes
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 SUMMER_PREDICTION_CSV_PATH = "data/summer_prediction.csv"
 WINTER_PREDICTION_CSV_PATH = "data/winter_prediction.csv"
+
+TIME = "received_time"
+DRINKING_WATER = "drinking_water"
+BUFFER_MAX = "buffer_max"
+BUFFER_MIN = "buffer_min"
+BUFFER_AVG = "buffer_avg"
+# TODO constant for heating_up and heating_up_prev
 
 TIME_OFFSET = np.timedelta64(1, "Y")
 
@@ -34,6 +40,7 @@ def load_data():
     heating_data.index = timestamps
     heating_data.index = heating_data.index.tz_convert(PROJECT_TIMEZONE)
     heating_data["heating_up_prev"] = heating_data["heating_up"].shift(1).fillna(False)
+    heating_data[BUFFER_AVG] = (heating_data[BUFFER_MAX] + heating_data[BUFFER_MIN]) / 2
     return heating_data.sort_index()
 
 
@@ -42,9 +49,11 @@ def load_prediction_templates():
     """Loads the prediction templates for summer and winter (returned in a 2-tuple in that order)."""
 
     def load_prediction(path) -> pd.DataFrame:
+        # TODO extract redundancies with load_data()
         pred = pd.read_csv(path)
         pred.index = pd.to_datetime(pred.pop(TIME), utc=True)
         pred.index = pred.index.tz_convert(PROJECT_TIMEZONE)
+        pred[BUFFER_AVG] = (pred[BUFFER_MAX] + pred[BUFFER_MIN]) / 2
         return pred
 
     summer = load_prediction(SUMMER_PREDICTION_CSV_PATH)

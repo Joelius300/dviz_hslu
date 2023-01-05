@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, time
 import streamlit as st
 
 from data import earliest_time, get_period, projected_hit_times
-from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase
+from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase, \
+    add_detailed_buffer_lines
 from project_constants import PROJECT_TITLE, PROJECT_TIMEZONE
 
 DEFAULT_DATE_OFFSET = timedelta(days=2)
@@ -66,7 +67,14 @@ with col_stored_energy:
     # st.plotly_chart(fig)
 
     fig = create_temperature_line_chart(data, predicted, BUFFER_MAX, lower_threshold, upper_threshold)
-    st.plotly_chart(fig)
+    stored_energy_chart_placeholder = st.empty()
+
+    detailed = st.checkbox("Detailed")
+    if detailed:
+        add_detailed_buffer_lines(fig, data, predicted)
+
+    stored_energy_chart_placeholder.plotly_chart(fig)
+
 
 with col_drinking_water:
     st.subheader("Drinking water")

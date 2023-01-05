@@ -4,53 +4,69 @@ from numbers import Number
 import humanize
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.graph_objs import Figure
+import pandas as pd
 
+from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX
 from shared import is_in_winter_mode, HitTimes
-
-TIME = "received_time"
-DRINKING_WATER = "drinking_water"
-BUFFER_MAX = "buffer_max"
-BUFFER_MIN = "buffer_min"
 
 TIME_LABEL = "Time"
 DRINKING_WATER_LABEL = "Drinking water"
 BUFFER_MAX_LABEL = "Buffer max"
 BUFFER_MIN_LABEL = "Buffer min"
+BUFFER_AVG_LABEL = "Buffer avg"
 
 LABELS = {
     TIME: TIME_LABEL,
     DRINKING_WATER: DRINKING_WATER_LABEL,
     BUFFER_MAX: BUFFER_MAX_LABEL,
-    BUFFER_MIN: BUFFER_MIN_LABEL
+    BUFFER_MIN: BUFFER_MIN_LABEL,
+    BUFFER_AVG: BUFFER_AVG_LABEL
 }
 
 DRINKING_WATER_COLOR = "aqua"
 BUFFER_MAX_COLOR = "orange"
 BUFFER_MIN_COLOR = "azure"
+BUFFER_AVG_COLOR = "green"
 
 COLORS = {
     DRINKING_WATER: DRINKING_WATER_COLOR,
     BUFFER_MAX: BUFFER_MAX_COLOR,
-    BUFFER_MIN: BUFFER_MIN_COLOR
+    BUFFER_MIN: BUFFER_MIN_COLOR,
+    BUFFER_AVG: BUFFER_AVG_COLOR
 }
 
 SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 
-def create_temperature_line_chart(data, predicted, column, lower_threshold, upper_threshold):
+def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, column: str,
+                                  lower_threshold: float | int, upper_threshold: float | int):
     fig = px.line(data, x=data.index, y=column, labels=LABELS)
 
     fig['data'][0]['line']['color'] = COLORS[column]
-    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")
+    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")  # TODO constants
     fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
-    fig.add_trace(
-        go.Scatter(x=predicted.index,
-                   y=predicted[column],
-                   mode="lines",
-                   line=go.scatter.Line(color="red"),  # TODO different color OR the fanning
-                   showlegend=False))
+    _add_prediction(fig, predicted, column)
 
     return fig
+
+
+def _add_prediction(fig: Figure, predicted: pd.DataFrame, column: str):
+    fig.add_trace(_get_line(predicted, column, "red"))  # TODO different color OR the fanning (with column color)
+
+
+def _get_line(data: pd.DataFrame, column: str, color):
+    go.Scatter(x=data.index,
+               y=data[column],
+               mode="lines",
+               line=go.scatter.Line(color=color),
+               showlegend=False)
+
+
+def add_detailed_buffer_lines(fig: Figure, data: pd.DataFrame, predicted: pd.DataFrame):
+    for col in [BUFFER_MIN, BUFFER_AVG]:
+        fig.add_trace(_get_line(data, col, COLORS[col]))
+        _add_prediction(fig, predicted, col)
 
 
 def create_temperature_gauge(current, earlier, column, lower_threshold, upper_threshold):
