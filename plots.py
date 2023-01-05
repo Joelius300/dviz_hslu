@@ -98,7 +98,7 @@ def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
     [high_hit, low_hit] = relevant_hit_times
     if low_hit:
         fire_up_time = low_hit - SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS
-        fire_up_delta = fmt_delta(fire_up_time) if fire_up_time >= current_time else "as soon as possible"
+        fire_up_delta = fmt_delta(fire_up_time) if fire_up_time > current_time else "as soon as possible"
 
         action_phrase = f"You should fire up **{fire_up_delta}**."
         cross_phrase = fmt_cross_phrase("lower", lower_threshold, low_hit)

@@ -132,11 +132,11 @@ def projected_hit_times(data: pd.DataFrame, predicted: pd.DataFrame,
     # so query that and adjust accordingly if necessary.
     first_predicted_time: datetime = predicted.index[0]
     # query only for upper here because upper must be crossed before lower
-    first_hitters = [kv for kv in hit_times.items() if kv[1][0] == first_predicted_time]
+    first_hitters = [key for key, value in hit_times.items() if value[0] == first_predicted_time]
     if first_hitters:
         past_data = data[first_predicted_time + HIT_POINT_DETECTION_PAST_OFFSET:]
         past_hit_times = projected_hit_times_core(past_data)
-        for key, _value in first_hitters:
+        for key in first_hitters:
             # use the past one instead for the first hitters, if there are any
             if past_hit_times[key][0]:
                 hit_times[key][0] = past_hit_times[key][0]
