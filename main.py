@@ -69,7 +69,7 @@ with col_stored_energy:
     fig = create_temperature_line_chart(data, predicted, BUFFER_MAX, lower_threshold, upper_threshold)
     stored_energy_chart_placeholder = st.empty()
 
-    detailed = st.checkbox("Detailed")
+    detailed = st.checkbox("Show buffer minimum and average")
     if detailed:
         add_detailed_buffer_lines(fig, data, predicted)
 

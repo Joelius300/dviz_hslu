@@ -44,29 +44,37 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, c
     fig = px.line(data, x=data.index, y=column, labels=LABELS)
 
     fig['data'][0]['line']['color'] = COLORS[column]
-    fig.add_hline(lower_threshold, line_dash="dash", line_color="dark gray")  # TODO constants
-    fig.add_hline(upper_threshold, line_dash="dash", line_color="dark gray")
+    _add_threshold_line(fig, lower_threshold)
+    _add_threshold_line(fig, upper_threshold)
     _add_prediction(fig, predicted, column)
 
     return fig
 
 
 def _add_prediction(fig: Figure, predicted: pd.DataFrame, column: str):
-    fig.add_trace(_get_line(predicted, column, "red"))  # TODO different color OR the fanning (with column color)
+    fig.add_trace(_get_line(predicted, column, "red"))
+    # TODO different color OR the fanning (with column color (or gray?))
+
+
+def _add_threshold_line(fig: Figure, threshold: float | int):
+    fig.add_hline(threshold, line_dash="dash", line_color="dark gray")  # TODO constants
 
 
 def _get_line(data: pd.DataFrame, column: str, color):
-    go.Scatter(x=data.index,
-               y=data[column],
-               mode="lines",
-               line=go.scatter.Line(color=color),
-               showlegend=False)
+    # TODO Fix hoverlabel to be formatted like plotly express
+    return go.Scatter(x=data.index,
+                      y=data[column],
+                      mode="lines",
+                      line=go.scatter.Line(color=color),
+                      name=LABELS[column],
+                      showlegend=False)
 
 
 def add_detailed_buffer_lines(fig: Figure, data: pd.DataFrame, predicted: pd.DataFrame):
     for col in [BUFFER_MIN, BUFFER_AVG]:
         fig.add_trace(_get_line(data, col, COLORS[col]))
         _add_prediction(fig, predicted, col)
+        # TODO determine if adding prediction makes sense.. But just stopping looks very bad..
 
 
 def create_temperature_gauge(current, earlier, column, lower_threshold, upper_threshold):
