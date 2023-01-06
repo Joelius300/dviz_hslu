@@ -21,6 +21,8 @@ FAN_DEGREE_PER_MINUTE = 1 / (4 * 60)  # 1 deg uncertainty per 4 hours
 FAN_INCREASE_PER_MINUTE = np.arange(1, PREDICTED_PERIOD / np.timedelta64(1, 's') + 10) * FAN_DEGREE_PER_MINUTE
 PREDICTION_RESAMPLE_INTERVAL_MIN = 10
 
+DEFAULT_YLIM = [10, 90]
+
 LABELS = {
     TIME: TIME_LABEL,
     DRINKING_WATER: DRINKING_WATER_LABEL,
@@ -47,23 +49,23 @@ SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, column: str,
                                   lower_threshold: float | int, upper_threshold: float | int,
                                   express=False):
+    all_data = pd.concat([data, predicted])
     if not express:
-        fig = go.Figure([_get_line(data, column, COLORS[column])], layout_hovermode="x")
+        fig = go.Figure([_get_line(all_data, column, COLORS[column])], layout_hovermode="x", layout_yaxis_range=DEFAULT_YLIM)
     else:
-        fig = px.line(data, x=data.index, y=column, labels=LABELS)
+        fig = px.line(all_data, x=all_data.index, y=column, labels=LABELS)
         fig.update_traces(hovertemplate=None, name=LABELS[column])
-        fig.update_layout(hovermode="x")
+        fig.update_layout(hovermode="x", yaxis=dict(range=DEFAULT_YLIM))
 
     _add_threshold_line(fig, lower_threshold)
     _add_threshold_line(fig, upper_threshold)
+    fig.add_vline(data.index[-1] + np.timedelta64(30, 's'), line_dash="dot", line_color="rgba(40, 40, 180, 0.8)")
     _add_prediction_fan(fig, predicted, column)
 
     return fig
 
 
 def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
-    fig.add_trace(_get_line(predicted, column, "red"))
-
     # resample to decrease resolution
     values = predicted[column].resample(f'{PREDICTION_RESAMPLE_INTERVAL_MIN}min').median()
 
@@ -129,7 +131,7 @@ def _get_line(data: pd.DataFrame, column: str, color):
 
 def add_detailed_buffer_lines(fig: Figure, data: pd.DataFrame, predicted: pd.DataFrame):
     for col in [BUFFER_MIN, BUFFER_AVG]:
-        fig.add_trace(_get_line(data, col, COLORS[col]))
+        fig.add_trace(_get_line(pd.concat([data, predicted]), col, COLORS[col]))
         _add_prediction_fan(fig, predicted, col)
         # TODO determine if adding prediction makes sense.. But just stopping looks very bad..
 
