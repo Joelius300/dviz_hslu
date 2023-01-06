@@ -2,12 +2,13 @@ from datetime import datetime, timedelta
 from numbers import Number
 
 import humanize
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 import pandas as pd
 
-from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX
+from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
 from shared import is_in_winter_mode, HitTimes
 
 TIME_LABEL = "Time"
@@ -15,6 +16,10 @@ DRINKING_WATER_LABEL = "Drinking water"
 BUFFER_MAX_LABEL = "Buffer max"
 BUFFER_MIN_LABEL = "Buffer min"
 BUFFER_AVG_LABEL = "Buffer avg"
+
+FAN_DEGREE_PER_MINUTE = 1 / (4 * 60)  # 1 deg uncertainty per 4 hours
+FAN_INCREASE_PER_MINUTE = np.arange(1, PREDICTED_PERIOD / np.timedelta64(1, 's') + 10) * FAN_DEGREE_PER_MINUTE
+PREDICTION_RESAMPLE_INTERVAL_MIN = 10
 
 LABELS = {
     TIME: TIME_LABEL,
@@ -40,22 +45,72 @@ SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 
 def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, column: str,
-                                  lower_threshold: float | int, upper_threshold: float | int):
-    fig = px.line(data, x=data.index, y=column, labels=LABELS)
-    fig.update_traces(hovertemplate=None, name=LABELS[column])
-    fig.update_layout(hovermode="x")
+                                  lower_threshold: float | int, upper_threshold: float | int,
+                                  express=False):
+    if not express:
+        fig = go.Figure([_get_line(data, column, COLORS[column])], layout_hovermode="x")
+    else:
+        fig = px.line(data, x=data.index, y=column, labels=LABELS)
+        fig.update_traces(hovertemplate=None, name=LABELS[column])
+        fig.update_layout(hovermode="x")
 
-    fig['data'][0]['line']['color'] = COLORS[column]
     _add_threshold_line(fig, lower_threshold)
     _add_threshold_line(fig, upper_threshold)
-    _add_prediction(fig, predicted, column)
+    _add_prediction_fan(fig, predicted, column)
 
     return fig
 
 
-def _add_prediction(fig: Figure, predicted: pd.DataFrame, column: str):
+def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
     fig.add_trace(_get_line(predicted, column, "red"))
-    # TODO different color OR the fanning (with column color (or gray?))
+
+    # resample to decrease resolution
+    values = predicted[column].resample(f'{PREDICTION_RESAMPLE_INTERVAL_MIN}min').median()
+
+    fan_deltas = FAN_INCREASE_PER_MINUTE[:len(values)] * PREDICTION_RESAMPLE_INTERVAL_MIN
+    bounds = pd.DataFrame({'upper': values + fan_deltas, 'lower': values - fan_deltas}, index=values.index)
+
+    rows_in_one_hour = int(np.timedelta64(1, 'h') / np.timedelta64(PREDICTION_RESAMPLE_INTERVAL_MIN, 'm'))
+
+    # take the max/min over 1 hour rolling
+    bounds['upper'] = bounds['upper'].rolling(rows_in_one_hour).max()
+    bounds['lower'] = bounds['lower'].rolling(rows_in_one_hour).min()
+
+    # an alternate solution which was explored is resampling again but this often results in predicted points
+    # outside the prediction bounds when plotted with linear lines. Therefore, a higher resolution is used but smoothed.
+    # bounds = bounds.resample("1h").apply({'upper': lambda g: g.max(), 'lower': lambda g: g.min()})
+
+    # take a moving average over 1 hour rolling to smooth it out
+    bounds = bounds.rolling(rows_in_one_hour).mean()
+
+    # ensure the bounds aren't outside the values
+    bounds['upper'] = bounds['upper'].clip(lower=values)
+    bounds['lower'] = bounds['lower'].clip(upper=values)
+
+    upper_line = go.Scatter(
+        name="Upper prediction",
+        x=bounds.index,
+        y=bounds.upper,
+        mode="lines",
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo="skip"
+    )
+
+    lower_line = go.Scatter(
+        name="Lower prediction",
+        x=bounds.index,
+        y=bounds.lower,
+        mode='lines',
+        line=dict(width=0),
+        fillcolor='rgba(69, 69, 69, 0.25)',
+        fill='tonexty',
+        showlegend=False,
+        hoverinfo="skip"
+    )
+
+    fig.add_trace(upper_line)
+    fig.add_trace(lower_line)
 
 
 def _add_threshold_line(fig: Figure, threshold: float | int):
@@ -75,7 +130,7 @@ def _get_line(data: pd.DataFrame, column: str, color):
 def add_detailed_buffer_lines(fig: Figure, data: pd.DataFrame, predicted: pd.DataFrame):
     for col in [BUFFER_MIN, BUFFER_AVG]:
         fig.add_trace(_get_line(data, col, COLORS[col]))
-        _add_prediction(fig, predicted, col)
+        _add_prediction_fan(fig, predicted, col)
         # TODO determine if adding prediction makes sense.. But just stopping looks very bad..
 
 

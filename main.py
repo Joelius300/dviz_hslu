@@ -82,7 +82,7 @@ with col_drinking_water:
     # fig = create_temperature_gauge(current, earlier, DRINKING_WATER, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, lower_threshold, upper_threshold)
+    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, lower_threshold, upper_threshold, express=True)
     st.plotly_chart(fig)
 
 # TODO
