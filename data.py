@@ -105,7 +105,7 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
         # move predicted times to the cut off point
         prediction_template.index = prediction_template.index - (prediction_template.index[0] - first_time_heating_up)
         # cut off from the point of first heating up and add prediction template from best matching time until the end
-        predicted = pd.concat([predicted[:first_time_heating_up].iloc[:-1], prediction_template])
+        predicted = pd.concat([predicted[:first_time_heating_up], prediction_template])
 
     return current, data, predicted
 
