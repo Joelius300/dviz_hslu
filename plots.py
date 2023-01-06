@@ -42,6 +42,8 @@ SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, column: str,
                                   lower_threshold: float | int, upper_threshold: float | int):
     fig = px.line(data, x=data.index, y=column, labels=LABELS)
+    fig.update_traces(hovertemplate=None, name=LABELS[column])
+    fig.update_layout(hovermode="x")
 
     fig['data'][0]['line']['color'] = COLORS[column]
     _add_threshold_line(fig, lower_threshold)
