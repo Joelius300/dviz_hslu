@@ -31,10 +31,14 @@ BUFFER_MAX_COLOR = "orange"
 BUFFER_MIN_COLOR = "dodgerblue"
 BUFFER_AVG_COLOR = "limegreen"
 
+THRESHOLD_LINE_COLOR = "dark gray"
+
+FAN_COLOR = 'rgba(69, 69, 69, 0.25)'
+
 # contender for parameter but not necessary for this project
 FAN_DEGREE_PER_MINUTE = 1 / (4 * 60)  # 1 deg uncertainty per 4 hours
 FAN_INCREASE_PER_MINUTE = np.arange(1, PREDICTED_PERIOD / np.timedelta64(1, 's') + 10) * FAN_DEGREE_PER_MINUTE
-PREDICTION_RESAMPLE_INTERVAL_MIN = 10
+FAN_RESAMPLE_INTERVAL_MIN = 10
 
 LABELS = {
     TIME: TIME_LABEL,
@@ -50,9 +54,6 @@ COLORS = {
     BUFFER_MIN: BUFFER_MIN_COLOR,
     BUFFER_AVG: BUFFER_AVG_COLOR
 }
-
-
-# todo make parameter
 
 
 def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
@@ -93,15 +94,14 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
     return fig
 
 
-# todo split into functions, one creating/calculating the bounds, one adding the traces
 def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hidden=False):
     # resample to decrease resolution
-    values = predicted[column].resample(f'{PREDICTION_RESAMPLE_INTERVAL_MIN}min').median()
+    values = predicted[column].resample(f'{FAN_RESAMPLE_INTERVAL_MIN}min').median()
 
-    fan_deltas = FAN_INCREASE_PER_MINUTE[:len(values)] * PREDICTION_RESAMPLE_INTERVAL_MIN
+    fan_deltas = FAN_INCREASE_PER_MINUTE[:len(values)] * FAN_RESAMPLE_INTERVAL_MIN
     bounds = pd.DataFrame({'upper': values + fan_deltas, 'lower': values - fan_deltas}, index=values.index)
 
-    rows_in_one_hour = int(np.timedelta64(1, 'h') / np.timedelta64(PREDICTION_RESAMPLE_INTERVAL_MIN, 'm'))
+    rows_in_one_hour = int(np.timedelta64(1, 'h') / np.timedelta64(FAN_RESAMPLE_INTERVAL_MIN, 'm'))
 
     # take the max/min over 1 hour rolling
     bounds['upper'] = bounds['upper'].rolling(rows_in_one_hour).max()
@@ -122,42 +122,35 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hi
     first_temp, first_index = predicted[column].iloc[0], predicted.index[0]
     bounds = pd.concat([pd.DataFrame({'upper': [first_temp], 'lower': [first_temp]}, index=[first_index]), bounds])
 
-    # todo extract dict with common args
-
-    upper_line = go.Scatter(
-        name="Upper prediction",
+    shared_trace_props = dict(
         x=bounds.index,
-        y=bounds.upper,
         mode="lines",
-        line=dict(width=0),
-        showlegend=False,
-        hoverinfo="skip",
-        legendgroup=LABELS[column]
-    )
-
-    lower_line = go.Scatter(
-        name="Lower prediction",
-        x=bounds.index,
-        y=bounds.lower,
-        mode='lines',
-        line=dict(width=0),
-        fillcolor='rgba(69, 69, 69, 0.25)',
-        fill='tonexty',
+        line_width=0,
         showlegend=False,
         hoverinfo="skip",
         legendgroup=LABELS[column]
     )
 
     if hidden:
-        upper_line.visible = "legendonly"
-        lower_line.visible = "legendonly"
+        shared_trace_props["visible"] = "legendonly"
 
-    fig.add_trace(upper_line)
-    fig.add_trace(lower_line)
+    fig.add_trace(go.Scatter(
+        name="Upper prediction",
+        y=bounds.upper,
+        **shared_trace_props
+    ))
+
+    fig.add_trace(go.Scatter(
+        name="Lower prediction",
+        y=bounds.lower,
+        fillcolor=FAN_COLOR,
+        fill='tonexty',
+        **shared_trace_props
+    ))
 
 
 def _add_threshold_line(fig: Figure, threshold: float | int):
-    fig.add_hline(threshold, line_dash="dash", line_color="dark gray")  # TODO constants
+    fig.add_hline(threshold, line_dash="dash", line_color=THRESHOLD_LINE_COLOR)
 
 
 def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
