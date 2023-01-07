@@ -18,3 +18,11 @@ class Thresholds(NamedTuple):
 def is_in_winter_mode(timestamp: datetime):
     # it's not symmetrical, and varies per year; usually the heating unit stays in winter mode longer
     return timestamp.month < 5 or timestamp.month >= 10
+
+
+def rgb(r: int, g: int, b: int):
+    return f'rgb({r},{g},{b})'
+
+
+def rgba(r: int, g: int, b: int, a=1.0):
+    return f'rgba({r},{g},{b},{a})'

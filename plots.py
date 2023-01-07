@@ -9,14 +9,7 @@ from plotly.graph_objs import Figure
 import pandas as pd
 
 from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
-from shared import is_in_winter_mode, HitTimes, Thresholds
-
-# TODO maybe move plot dimensions and ylim into main and make them parameters for the appropriate functions
-# the dimensions of the plot are some of the strongest contenders for parameters instead of constants.
-# But because I employed constants so widely otherwise, which increased readability and decreased complexity at the cost
-# of decreased code reusability (for other projects), I stayed consistent and used constants for plot dimensions too.
-# Note: the application does not really get less customizable and the relevant values to change for a customized
-# experience are even neatly arranged and easy to find and update.
+from shared import is_in_winter_mode, HitTimes, Thresholds, rgba, rgb
 
 TIME_LABEL = "Time"
 DRINKING_WATER_LABEL = "Drinking water"
@@ -26,14 +19,17 @@ BUFFER_AVG_LABEL = "Buffer avg"
 
 TEMPERATURE_LABEL = "Temperature [°C]"
 
-DRINKING_WATER_COLOR = "darkblue"
-BUFFER_MAX_COLOR = "orange"
-BUFFER_MIN_COLOR = "dodgerblue"
-BUFFER_AVG_COLOR = "limegreen"
+DRINKING_WATER_COLOR = (0, 0, 139)  # "darkblue"
+BUFFER_MAX_COLOR = (255, 165, 0)  # "orange"
+BUFFER_MIN_COLOR = (30, 144, 255)  # "dodgerblue"
+BUFFER_AVG_COLOR = (50, 205, 50)  # "limegreen"
 
-THRESHOLD_LINE_COLOR = "dark gray"
+THRESHOLD_LINE_COLOR = "dark gray"  # todo this color/opacity here i don't like very much
 
-FAN_COLOR = 'rgba(69, 69, 69, 0.25)'
+PREDICTION_SHADOW_COLOR = (227, 227, 232)  # secondary background (chart background) = (240, 242, 246) - (13, 15, 14)
+PREDICTION_SHADOW_OPACITY = 1
+
+FAN_OPACITY = .25
 
 # contender for parameter but not necessary for this project
 FAN_DEGREE_PER_MINUTE = 1 / (4 * 60)  # 1 deg uncertainty per 4 hours
@@ -77,7 +73,7 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
     ))
 
     def add_temperature_line(col, hidden=False):
-        fig.add_trace(_get_line(all_data, col, COLORS[col], hidden=hidden))
+        fig.add_trace(_get_line(all_data, col, rgb(*COLORS[col]), hidden=hidden))
         _add_prediction_fan(fig, predicted, col, hidden=hidden)
 
     if isinstance(columns, str):
@@ -88,8 +84,7 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
 
     _add_threshold_line(fig, thresholds.lower)
     _add_threshold_line(fig, thresholds.upper)
-    # todo hingergrund wi ir meteo app, nid pünktleti line
-    fig.add_vline(data.index[-1] + np.timedelta64(30, 's'), line_dash="dot", line_color="rgba(40, 40, 180, 0.8)")
+    _add_prediction_shadow(fig, data.index[0], predicted.index[0])
 
     return fig
 
@@ -143,9 +138,25 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hi
     fig.add_trace(go.Scatter(
         name="Lower prediction",
         y=bounds.lower,
-        fillcolor=FAN_COLOR,
+        fillcolor=rgba(*COLORS[column], a=FAN_OPACITY),
         fill='tonexty',
         **shared_trace_props
+    ))
+
+
+def _add_prediction_shadow(fig: Figure, start, end):
+    fig.add_shape(go.layout.Shape(
+        type="rect",
+        xref="x",
+        yref="paper",
+        x0=start,
+        y0=-0.001,
+        x1=end,
+        y1=1,
+        fillcolor=rgb(*PREDICTION_SHADOW_COLOR),
+        opacity=PREDICTION_SHADOW_OPACITY,
+        layer="below",
+        line_width=0,  # once again, Plotly not using the correct type annotations for kwargs
     ))
 
 
