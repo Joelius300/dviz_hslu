@@ -17,10 +17,6 @@ from shared import is_in_winter_mode, HitTimes
 # of decreased code reusability (for other projects), I stayed consistent and used constants for plot dimensions too.
 # Note: the application does not really get less customizable and the relevant values to change for a customized
 # experience are even neatly arranged and easy to find and update.
-PLOT_HEIGHT = 400
-PLOT_WIDTH = 800
-
-DEFAULT_YLIM = [15, 85]  # °C - same system and environment, so the limits should be universal to have a reference
 
 TIME_LABEL = "Time"
 DRINKING_WATER_LABEL = "Drinking water"
@@ -35,6 +31,7 @@ BUFFER_MAX_COLOR = "orange"
 BUFFER_MIN_COLOR = "dodgerblue"
 BUFFER_AVG_COLOR = "limegreen"
 
+# contender for parameter but not necessary for this project
 FAN_DEGREE_PER_MINUTE = 1 / (4 * 60)  # 1 deg uncertainty per 4 hours
 FAN_INCREASE_PER_MINUTE = np.arange(1, PREDICTED_PERIOD / np.timedelta64(1, 's') + 10) * FAN_DEGREE_PER_MINUTE
 PREDICTION_RESAMPLE_INTERVAL_MIN = 10
@@ -54,25 +51,27 @@ COLORS = {
     BUFFER_AVG: BUFFER_AVG_COLOR
 }
 
+# todo make parameter
 SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 
-def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, columns: str | List[Tuple[str, bool]],
-                                  lower_threshold: float | int, upper_threshold: float | int):
+def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
+                                  columns: str | List[Tuple[str, bool]], ylim: List[int],
+                                  lower_threshold: float | int, upper_threshold: float | int,
+                                  plot_height: int, plot_width: int) -> Figure:
     all_data = pd.concat([data, predicted])
     fig = go.Figure(layout=go.Layout(
         hovermode="x",
         xaxis_title_text=LABELS[TIME],  # wrongly type annotated kwargs in Plotly library
         yaxis=go.layout.YAxis(
-            # same limits across all temperature charts <- same references, thresholds and system
-            range=DEFAULT_YLIM,
+            range=ylim,
             title_text=TEMPERATURE_LABEL,  # wrongly type annotated kwargs in Plotly library
         ),
         margin=go.layout.Margin(
             t=40, b=0,  # just enough for the Plotly menu bar
         ),
-        height=PLOT_HEIGHT,
-        width=PLOT_WIDTH,
+        height=plot_height,
+        width=plot_width,
         legend_traceorder="grouped",  # group temperatures with their prediction fans in legend (wrong annotation again)
     ))
 
@@ -94,6 +93,7 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, c
     return fig
 
 
+# todo split into functions, one creating/calculating the bounds, one adding the traces
 def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hidden=False):
     # resample to decrease resolution
     values = predicted[column].resample(f'{PREDICTION_RESAMPLE_INTERVAL_MIN}min').median()
@@ -164,7 +164,7 @@ def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
     trace = go.Scatter(x=data.index,
                        y=data[column],
                        mode="lines",
-                       line=go.scatter.Line(color=color),
+                       line_color=color,
                        name=LABELS[column],
                        showlegend=True,
                        legendgroup=LABELS[column])
@@ -175,6 +175,7 @@ def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
     return trace
 
 
+# todo nuke?
 def create_temperature_gauge(current, earlier, column, lower_threshold, upper_threshold):
     fig = go.Figure(go.Indicator(
         domain={'x': [0, 1], 'y': [0, 1]},

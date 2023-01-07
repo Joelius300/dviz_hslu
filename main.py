@@ -10,6 +10,13 @@ DEFAULT_DATE_OFFSET = timedelta(days=2)
 DEFAULT_LOWER_THRESHOLD = 30
 DEFAULT_UPPER_THRESHOLD = 40
 
+# plot dimensions in pixels for two column layout in wide mode.
+# Designed for full-hd screens (1920x1080) as responsiveness was not a requirement and hard to get right with Plotly.
+PLOT_HEIGHT = 400
+PLOT_WIDTH = 800
+
+DEFAULT_YLIM = [20, 90]  # °C - same system and environment, so the limits should be universal to have a reference
+
 st.set_page_config(layout="wide")
 
 today = datetime.utcnow().date()
@@ -66,7 +73,7 @@ with col_stored_energy:
     # st.plotly_chart(fig)
 
     fig = create_temperature_line_chart(data, predicted, [(BUFFER_MAX, False), (BUFFER_AVG, True), (BUFFER_MIN, True)],
-                                        lower_threshold, upper_threshold)
+                                        DEFAULT_YLIM, lower_threshold, upper_threshold, PLOT_HEIGHT, PLOT_WIDTH)
     st.plotly_chart(fig)
     st.write(fig.to_dict())
 
@@ -76,7 +83,8 @@ with col_drinking_water:
     # fig = create_temperature_gauge(current, earlier, DRINKING_WATER, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, lower_threshold, upper_threshold)
+    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, DEFAULT_YLIM,
+                                        lower_threshold, upper_threshold, PLOT_HEIGHT, PLOT_WIDTH)
     st.plotly_chart(fig)
     st.write(fig.to_dict())
 
