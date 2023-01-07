@@ -10,5 +10,8 @@ Date,Hours,Task
 11.12.22,3,Start implementing with Streamlit (data prep and loading)
 12.12.22,3,Streamlit and Plotly implementation
 01.01.23,0.5,Streamlit and Plotly implementation (thresholds)
-02.01.23,6,Streamlit and Plotly implementation (predictions)
-03.01.23,6,Streamlit and Plotly implementation (predictions)
+02.01.23,6,Streamlit and Plotly implementation (predictions setup)
+03.01.23,6,Streamlit and Plotly implementation (predictions plotting)
+05.01.23,1,Streamlit and Plotly implementation (detailed checkbox with additional plots)
+06.01.23,5,Streamlit and Plotly implementation (predictions styling)
+07.01.23,7,Streamlit and Plotly implementation (styling and code cleanup)
