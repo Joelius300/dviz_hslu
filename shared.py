@@ -1,7 +1,18 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, NamedTuple
 
-HitTimes = dict[str, list[Optional[datetime], Optional[datetime]]]
+
+class ThresholdCrossings(NamedTuple):
+    upper: Optional[datetime]
+    lower: Optional[datetime]
+
+
+HitTimes = dict[str, ThresholdCrossings]
+
+
+class Thresholds(NamedTuple):
+    upper: float | int
+    lower: float | int
 
 
 def is_in_winter_mode(timestamp: datetime):

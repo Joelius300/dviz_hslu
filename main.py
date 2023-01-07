@@ -5,6 +5,7 @@ import streamlit as st
 from data import earliest_time, get_period, projected_hit_times, BUFFER_AVG, BUFFER_MIN
 from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase
 from project_constants import PROJECT_TITLE, PROJECT_TIMEZONE
+from shared import Thresholds
 
 DEFAULT_DATE_OFFSET = timedelta(days=2)
 DEFAULT_LOWER_THRESHOLD = 30
@@ -60,15 +61,16 @@ with upper_threshold_col:
     upper_threshold = st.number_input("Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
     # TODO Constrain upper threshold to be above lower threshold
 
+thresholds = Thresholds(upper_threshold, lower_threshold)
+
 current, data, predicted = get_period(period_from, period_to)
 
 since_index = max(0, len(data) - 60 * 1)  # todo this 60 * 1 should be a variable somewhere. some gauge delta time.
 # it also needs to be very obvious what that delta is in the visualization, either by text or/and indicator in the chart
 earlier = data.iloc[since_index]
 
-hit_times = projected_hit_times(data, predicted, lower_threshold, upper_threshold)
-st.write(construct_action_phrase(hit_times, period_to, lower_threshold, upper_threshold,
-                                 SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS))
+hit_times = projected_hit_times(data, predicted, thresholds)
+st.write(construct_action_phrase(hit_times, period_to, thresholds, SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS))
 
 col_stored_energy, col_drinking_water = st.columns(2)
 
@@ -79,7 +81,7 @@ with col_stored_energy:
     # st.plotly_chart(fig)
 
     fig = create_temperature_line_chart(data, predicted, [(BUFFER_MAX, False), (BUFFER_AVG, True), (BUFFER_MIN, True)],
-                                        DEFAULT_YLIM, lower_threshold, upper_threshold, PLOT_HEIGHT, PLOT_WIDTH)
+                                        DEFAULT_YLIM, thresholds, PLOT_HEIGHT, PLOT_WIDTH)
     st.plotly_chart(fig)
     st.write(fig.to_dict())
 
@@ -89,8 +91,8 @@ with col_drinking_water:
     # fig = create_temperature_gauge(current, earlier, DRINKING_WATER, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, DEFAULT_YLIM,
-                                        lower_threshold, upper_threshold, PLOT_HEIGHT, PLOT_WIDTH)
+    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER,
+                                        DEFAULT_YLIM, thresholds, PLOT_HEIGHT, PLOT_WIDTH)
     st.plotly_chart(fig)
     st.write(fig.to_dict())
 

@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from project_constants import PROJECT_TIMEZONE
-from shared import is_in_winter_mode, HitTimes
+from shared import is_in_winter_mode, HitTimes, Thresholds, ThresholdCrossings
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 SUMMER_PREDICTION_CSV_PATH = "data/summer_prediction.csv"
@@ -110,28 +110,24 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
     return current, data, predicted
 
 
-def projected_hit_times(data: pd.DataFrame, predicted: pd.DataFrame,
-                        lower_threshold: float | int,
-                        upper_threshold: float | int):
+def projected_hit_times(data: pd.DataFrame, predicted: pd.DataFrame, thresholds: Thresholds):
     """
     Returns the projected (or past) times when values first passed the thresholds.
 
     :param data: The past data in the period just before the predicted data.
     :param predicted: The predicted data in the period just after the past data.
-    :param lower_threshold: The lower threshold to cross.
-    :param upper_threshold: The upper threshold to cross.
-    :return: A dictionary with one entry per PREDICTED_COLUMNS. Each entry has a list with 2 values
-             where the first one is the time it first crossed the upper threshold, and the second when it first
-             crossed the lower threshold. If it didn't cross the threshold in the predicted data, or in
-             HIT_POINT_DETECTION_PAST_OFFSET of the past data, then the value is NULL.
+    :param thresholds: The lower and upper thresholds to cross.
+    :return: A dictionary with one entry per PREDICTED_COLUMNS. Each entry contains the first time the upper and
+             lower thresholds are crossed respectively. If it didn't cross the threshold in the predicted data,
+             or in HIT_POINT_DETECTION_PAST_OFFSET of the past data, then the timestamp is NULL instead.
     """
 
     def projected_hit_times_core(period: pd.DataFrame):
         hit_times: HitTimes = {}
         for col in PREDICTED_COLUMNS:
-            below_upper = period.query(f'{col} < {upper_threshold}').first_valid_index()
-            below_lower = period.query(f'{col} < {lower_threshold}').first_valid_index()
-            hit_times[col] = [below_upper, below_lower]
+            first_below_upper = period.query(f'{col} < {thresholds.upper}').first_valid_index()
+            first_below_lower = period.query(f'{col} < {thresholds.lower}').first_valid_index()
+            hit_times[col] = ThresholdCrossings(first_below_upper, first_below_lower)
 
         return hit_times
 
@@ -141,15 +137,16 @@ def projected_hit_times(data: pd.DataFrame, predicted: pd.DataFrame,
     # so query that and adjust accordingly if necessary.
     first_predicted_time: datetime = predicted.index[0]
     # query only for upper here because upper must be crossed before lower
-    first_hitters = [key for key, value in hit_times.items() if value[0] == first_predicted_time]
+    first_hitters = [col for col, hits in hit_times.items() if hits.upper == first_predicted_time]
     if first_hitters:
         past_data = data[first_predicted_time + HIT_POINT_DETECTION_PAST_OFFSET:]
         past_hit_times = projected_hit_times_core(past_data)
-        for key in first_hitters:
+        for col in first_hitters:
             # use the past one instead for the first hitters, if there are any
-            if past_hit_times[key][0]:
-                hit_times[key][0] = past_hit_times[key][0]
-            if past_hit_times[key][1]:
-                hit_times[key][1] = past_hit_times[key][1]
+            upper, lower = hit_times[col]
+            past_upper, past_lower = past_hit_times[col]
+            upper = past_upper if past_upper else upper
+            lower = past_lower if past_lower else lower
+            hit_times[col] = ThresholdCrossings(upper, lower)
 
     return hit_times

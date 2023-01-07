@@ -9,7 +9,7 @@ from plotly.graph_objs import Figure
 import pandas as pd
 
 from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
-from shared import is_in_winter_mode, HitTimes
+from shared import is_in_winter_mode, HitTimes, Thresholds
 
 # TODO maybe move plot dimensions and ylim into main and make them parameters for the appropriate functions
 # the dimensions of the plot are some of the strongest contenders for parameters instead of constants.
@@ -51,12 +51,13 @@ COLORS = {
     BUFFER_AVG: BUFFER_AVG_COLOR
 }
 
+
 # todo make parameter
 
 
 def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
                                   columns: str | List[Tuple[str, bool]], ylim: List[int],
-                                  lower_threshold: float | int, upper_threshold: float | int,
+                                  thresholds: Thresholds,
                                   plot_height: int, plot_width: int) -> Figure:
     all_data = pd.concat([data, predicted])
     fig = go.Figure(layout=go.Layout(
@@ -84,8 +85,8 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
         for col, hidden in columns:
             add_temperature_line(col, hidden)
 
-    _add_threshold_line(fig, lower_threshold)
-    _add_threshold_line(fig, upper_threshold)
+    _add_threshold_line(fig, thresholds.lower)
+    _add_threshold_line(fig, thresholds.upper)
     # todo hingergrund wi ir meteo app, nid pünktleti line
     fig.add_vline(data.index[-1] + np.timedelta64(30, 's'), line_dash="dot", line_color="rgba(40, 40, 180, 0.8)")
 
@@ -192,16 +193,14 @@ def create_temperature_gauge(current, earlier, column, lower_threshold, upper_th
     return fig
 
 
-def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
-                            lower_threshold: Number, upper_threshold: Number,
+def construct_action_phrase(hit_times: HitTimes, current_time: datetime, thresholds: Thresholds,
                             suggested_fire_up_time_before_threshold_cross: timedelta) -> str:
     """
     Constructs a phrase (str) describing the recommended action with relative times and additional information.
 
     :param hit_times: The projected hit times (return value of projected_hit_times())
     :param current_time: The (simulated) current time -> end of selected period
-    :param lower_threshold: The lower threshold to cross. Must be the same threshold used for calculating hit_times.
-    :param upper_threshold: The upper threshold to cross. Must be the same threshold used for calculating hit_times.
+    :param thresholds: The thresholds to cross. Must be the same thresholds used for calculating hit_times.
     :param suggested_fire_up_time_before_threshold_cross: Time delta between suggested firing-up-time and threshold-cross-time.
     :return: A human-readable phrase in the form of a string.
     """
@@ -219,15 +218,15 @@ def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
 
     action_phrase = "No immediate action necessary."
 
-    [high_hit, low_hit] = relevant_hit_times
-    if low_hit:
-        fire_up_time = low_hit - suggested_fire_up_time_before_threshold_cross
+    upper_hit, lower_hit = relevant_hit_times
+    if lower_hit:
+        fire_up_time = lower_hit - suggested_fire_up_time_before_threshold_cross
         fire_up_delta = fmt_delta(fire_up_time) if fire_up_time > current_time else "as soon as possible"
 
         action_phrase = f"You should fire up **{fire_up_delta}**."
-        cross_phrase = fmt_cross_phrase("lower", lower_threshold, low_hit)
-    elif high_hit:
-        cross_phrase = fmt_cross_phrase("upper", upper_threshold, high_hit)
+        cross_phrase = fmt_cross_phrase("lower", thresholds.lower, lower_hit)
+    elif upper_hit:
+        cross_phrase = fmt_cross_phrase("upper", thresholds.upper, upper_hit)
     else:
         return action_phrase
 
