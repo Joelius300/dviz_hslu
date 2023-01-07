@@ -79,11 +79,13 @@ def earliest_time() -> datetime:
 def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, pd.DataFrame, pd.DataFrame]:
     """
     Fetches data in a certain period of time including a forecast prediction right after the end of the period.
+    Automatic downsampling is done with respect of the requested timespan to reduce the number of rows returned
+    (see DOWNSAMPLING).
 
     :param period_from: Timestamp for the start of the period.
     :param period_to: Timestamp for the end of the period.
     :return: A 3-tuple with the current value (at period end), the past data (during period) and predicted data
-             (after period).
+             (after period plus PREDICTED_PERIOD).
     """
     period_from, period_to = pd.to_datetime(period_from), pd.to_datetime(period_to)
 
