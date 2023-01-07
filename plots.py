@@ -89,6 +89,10 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
     bounds['upper'] = bounds['upper'].clip(lower=values)
     bounds['lower'] = bounds['lower'].clip(upper=values)
 
+    # ensure the fan has a smooth start from the initial prediction position after all the aggregation & smoothing
+    first_temp, first_index = predicted[column].iloc[0], predicted.index[0]
+    bounds = pd.concat([pd.DataFrame({'upper': [first_temp], 'lower': [first_temp]}, index=[first_index]), bounds])
+
     upper_line = go.Scatter(
         name="Upper prediction",
         x=bounds.index,
