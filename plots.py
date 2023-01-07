@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from numbers import Number
+from typing import List, Tuple
 
 import humanize
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 import pandas as pd
@@ -11,17 +11,33 @@ import pandas as pd
 from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
 from shared import is_in_winter_mode, HitTimes
 
+# TODO maybe move plot dimensions and ylim into main and make them parameters for the appropriate functions
+# the dimensions of the plot are some of the strongest contenders for parameters instead of constants.
+# But because I employed constants so widely otherwise, which increased readability and decreased complexity at the cost
+# of decreased code reusability (for other projects), I stayed consistent and used constants for plot dimensions too.
+# Note: the application does not really get less customizable and the relevant values to change for a customized
+# experience are even neatly arranged and easy to find and update.
+PLOT_HEIGHT = 400
+PLOT_WIDTH = 800
+
+DEFAULT_YLIM = [15, 85]  # °C - same system and environment, so the limits should be universal to have a reference
+
 TIME_LABEL = "Time"
 DRINKING_WATER_LABEL = "Drinking water"
 BUFFER_MAX_LABEL = "Buffer max"
 BUFFER_MIN_LABEL = "Buffer min"
 BUFFER_AVG_LABEL = "Buffer avg"
 
+TEMPERATURE_LABEL = "Temperature [°C]"
+
+DRINKING_WATER_COLOR = "darkblue"
+BUFFER_MAX_COLOR = "orange"
+BUFFER_MIN_COLOR = "dodgerblue"
+BUFFER_AVG_COLOR = "limegreen"
+
 FAN_DEGREE_PER_MINUTE = 1 / (4 * 60)  # 1 deg uncertainty per 4 hours
 FAN_INCREASE_PER_MINUTE = np.arange(1, PREDICTED_PERIOD / np.timedelta64(1, 's') + 10) * FAN_DEGREE_PER_MINUTE
 PREDICTION_RESAMPLE_INTERVAL_MIN = 10
-
-DEFAULT_YLIM = [10, 90]
 
 LABELS = {
     TIME: TIME_LABEL,
@@ -30,11 +46,6 @@ LABELS = {
     BUFFER_MIN: BUFFER_MIN_LABEL,
     BUFFER_AVG: BUFFER_AVG_LABEL
 }
-
-DRINKING_WATER_COLOR = "aqua"
-BUFFER_MAX_COLOR = "orange"
-BUFFER_MIN_COLOR = "azure"
-BUFFER_AVG_COLOR = "green"
 
 COLORS = {
     DRINKING_WATER: DRINKING_WATER_COLOR,
@@ -46,26 +57,44 @@ COLORS = {
 SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 
-def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, column: str,
-                                  lower_threshold: float | int, upper_threshold: float | int,
-                                  express=False):
+def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame, columns: str | List[Tuple[str, bool]],
+                                  lower_threshold: float | int, upper_threshold: float | int):
     all_data = pd.concat([data, predicted])
-    if not express:
-        fig = go.Figure([_get_line(all_data, column, COLORS[column])], layout_hovermode="x", layout_yaxis_range=DEFAULT_YLIM)
-    else:
-        fig = px.line(all_data, x=all_data.index, y=column, labels=LABELS)
-        fig.update_traces(hovertemplate=None, name=LABELS[column])
-        fig.update_layout(hovermode="x", yaxis=dict(range=DEFAULT_YLIM))
+    fig = go.Figure(layout=go.Layout(
+        hovermode="x",
+        xaxis_title_text=LABELS[TIME],  # wrongly type annotated kwargs in Plotly library
+        yaxis=go.layout.YAxis(
+            # same limits across all temperature charts <- same references, thresholds and system
+            range=DEFAULT_YLIM,
+            title_text=TEMPERATURE_LABEL,  # wrongly type annotated kwargs in Plotly library
+        ),
+        margin=go.layout.Margin(
+            t=40, b=0,  # just enough for the Plotly menu bar
+        ),
+        height=PLOT_HEIGHT,
+        width=PLOT_WIDTH,
+        legend_traceorder="grouped",  # group temperatures with their prediction fans in legend (wrong annotation again)
+    ))
+
+    def add_temperature_line(col, hidden=False):
+        fig.add_trace(_get_line(all_data, col, COLORS[col], hidden=hidden))
+        _add_prediction_fan(fig, predicted, col, hidden=hidden)
+
+    if isinstance(columns, str):
+        add_temperature_line(columns)
+    else:  # must be list of tuples with column name and hidden flag
+        for col, hidden in columns:
+            add_temperature_line(col, hidden)
 
     _add_threshold_line(fig, lower_threshold)
     _add_threshold_line(fig, upper_threshold)
+    # todo hingergrund wi ir meteo app, nid pünktleti line
     fig.add_vline(data.index[-1] + np.timedelta64(30, 's'), line_dash="dot", line_color="rgba(40, 40, 180, 0.8)")
-    _add_prediction_fan(fig, predicted, column)
 
     return fig
 
 
-def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
+def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hidden=False):
     # resample to decrease resolution
     values = predicted[column].resample(f'{PREDICTION_RESAMPLE_INTERVAL_MIN}min').median()
 
@@ -93,6 +122,8 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
     first_temp, first_index = predicted[column].iloc[0], predicted.index[0]
     bounds = pd.concat([pd.DataFrame({'upper': [first_temp], 'lower': [first_temp]}, index=[first_index]), bounds])
 
+    # todo extract dict with common args
+
     upper_line = go.Scatter(
         name="Upper prediction",
         x=bounds.index,
@@ -100,7 +131,8 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
         mode="lines",
         line=dict(width=0),
         showlegend=False,
-        hoverinfo="skip"
+        hoverinfo="skip",
+        legendgroup=LABELS[column]
     )
 
     lower_line = go.Scatter(
@@ -112,8 +144,13 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str):
         fillcolor='rgba(69, 69, 69, 0.25)',
         fill='tonexty',
         showlegend=False,
-        hoverinfo="skip"
+        hoverinfo="skip",
+        legendgroup=LABELS[column]
     )
+
+    if hidden:
+        upper_line.visible = "legendonly"
+        lower_line.visible = "legendonly"
 
     fig.add_trace(upper_line)
     fig.add_trace(lower_line)
@@ -123,21 +160,19 @@ def _add_threshold_line(fig: Figure, threshold: float | int):
     fig.add_hline(threshold, line_dash="dash", line_color="dark gray")  # TODO constants
 
 
-def _get_line(data: pd.DataFrame, column: str, color):
-    # TODO Fix hoverlabel to be formatted like plotly express
-    return go.Scatter(x=data.index,
-                      y=data[column],
-                      mode="lines",
-                      line=go.scatter.Line(color=color),
-                      name=LABELS[column],
-                      showlegend=False)
+def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
+    trace = go.Scatter(x=data.index,
+                       y=data[column],
+                       mode="lines",
+                       line=go.scatter.Line(color=color),
+                       name=LABELS[column],
+                       showlegend=True,
+                       legendgroup=LABELS[column])
 
+    if hidden:
+        trace.visible = "legendonly"
 
-def add_detailed_buffer_lines(fig: Figure, data: pd.DataFrame, predicted: pd.DataFrame):
-    for col in [BUFFER_MIN, BUFFER_AVG]:
-        fig.add_trace(_get_line(pd.concat([data, predicted]), col, COLORS[col]))
-        _add_prediction_fan(fig, predicted, col)
-        # TODO determine if adding prediction makes sense.. But just stopping looks very bad..
+    return trace
 
 
 def create_temperature_gauge(current, earlier, column, lower_threshold, upper_threshold):

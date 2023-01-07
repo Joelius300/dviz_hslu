@@ -2,9 +2,8 @@ from datetime import datetime, timedelta, time
 
 import streamlit as st
 
-from data import earliest_time, get_period, projected_hit_times
-from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase, \
-    add_detailed_buffer_lines
+from data import earliest_time, get_period, projected_hit_times, BUFFER_AVG, BUFFER_MIN
+from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase
 from project_constants import PROJECT_TITLE, PROJECT_TIMEZONE
 
 DEFAULT_DATE_OFFSET = timedelta(days=2)
@@ -66,15 +65,10 @@ with col_stored_energy:
     # fig = create_temperature_gauge(current, earlier, BUFFER_MAX, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, predicted, BUFFER_MAX, lower_threshold, upper_threshold)
-    stored_energy_chart_placeholder = st.empty()
-
-    detailed = st.checkbox("Show buffer minimum and average")
-    if detailed:
-        add_detailed_buffer_lines(fig, data, predicted)
-
-    stored_energy_chart_placeholder.plotly_chart(fig)
-
+    fig = create_temperature_line_chart(data, predicted, [(BUFFER_MAX, False), (BUFFER_AVG, True), (BUFFER_MIN, True)],
+                                        lower_threshold, upper_threshold)
+    st.plotly_chart(fig)
+    st.write(fig.to_dict())
 
 with col_drinking_water:
     st.subheader("Drinking water")
@@ -82,8 +76,9 @@ with col_drinking_water:
     # fig = create_temperature_gauge(current, earlier, DRINKING_WATER, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
 
-    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, lower_threshold, upper_threshold, express=True)
+    fig = create_temperature_line_chart(data, predicted, DRINKING_WATER, lower_threshold, upper_threshold)
     st.plotly_chart(fig)
+    st.write(fig.to_dict())
 
 # TODO
 # Line chart with average stored energy ((puffer oben + puffer unten) / 2) fan'd out to 50% on each site.
