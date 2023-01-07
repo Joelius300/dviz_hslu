@@ -52,7 +52,6 @@ COLORS = {
 }
 
 # todo make parameter
-SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 
 def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
@@ -194,7 +193,8 @@ def create_temperature_gauge(current, earlier, column, lower_threshold, upper_th
 
 
 def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
-                            lower_threshold: Number, upper_threshold: Number):
+                            lower_threshold: Number, upper_threshold: Number,
+                            suggested_fire_up_time_before_threshold_cross: timedelta) -> str:
     """
     Constructs a phrase (str) describing the recommended action with relative times and additional information.
 
@@ -202,6 +202,7 @@ def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
     :param current_time: The (simulated) current time -> end of selected period
     :param lower_threshold: The lower threshold to cross. Must be the same threshold used for calculating hit_times.
     :param upper_threshold: The upper threshold to cross. Must be the same threshold used for calculating hit_times.
+    :param suggested_fire_up_time_before_threshold_cross: Time delta between suggested firing-up-time and threshold-cross-time.
     :return: A human-readable phrase in the form of a string.
     """
     relevant_column = BUFFER_MAX if is_in_winter_mode(current_time) else DRINKING_WATER
@@ -220,7 +221,7 @@ def construct_action_phrase(hit_times: HitTimes, current_time: datetime,
 
     [high_hit, low_hit] = relevant_hit_times
     if low_hit:
-        fire_up_time = low_hit - SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS
+        fire_up_time = low_hit - suggested_fire_up_time_before_threshold_cross
         fire_up_delta = fmt_delta(fire_up_time) if fire_up_time > current_time else "as soon as possible"
 
         action_phrase = f"You should fire up **{fire_up_delta}**."

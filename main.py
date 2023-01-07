@@ -17,6 +17,11 @@ PLOT_WIDTH = 800
 
 DEFAULT_YLIM = [20, 90]  # °C - same system and environment, so the limits should be universal to have a reference
 
+# to avoid an overwhelming number of inputs and configurations, this is fixed for the application. However, in the real
+# world this might be a value that's interesting to configure depending on the volume of the buffer, the type of wood
+# used, the output of the furnace, etc.
+SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
+
 st.set_page_config(layout="wide")
 
 today = datetime.utcnow().date()
@@ -62,7 +67,8 @@ since_index = max(0, len(data) - 60 * 1)  # todo this 60 * 1 should be a variabl
 earlier = data.iloc[since_index]
 
 hit_times = projected_hit_times(data, predicted, lower_threshold, upper_threshold)
-st.write(construct_action_phrase(hit_times, period_to, lower_threshold, upper_threshold))
+st.write(construct_action_phrase(hit_times, period_to, lower_threshold, upper_threshold,
+                                 SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS))
 
 col_stored_energy, col_drinking_water = st.columns(2)
 
