@@ -17,7 +17,7 @@ DRINKING_WATER = "drinking_water"
 BUFFER_MAX = "buffer_max"
 BUFFER_MIN = "buffer_min"
 BUFFER_AVG = "buffer_avg"
-# TODO constant for heating_up and heating_up_prev
+HEATING_UP = "heating_up"
 
 TIME_OFFSET = np.timedelta64(1, "Y")
 
@@ -25,6 +25,15 @@ PREDICTED_PERIOD = np.timedelta64(3, "D")
 PREDICTED_COLUMNS = [BUFFER_MAX, DRINKING_WATER]
 HIT_POINT_DETECTION_PAST_OFFSET = np.timedelta64(-1, "D")
 
+# a list of downsampling conditions with their respective resampling interval. Must be ordered DESCENDING.
+# first element in the tuple is length of the period that must be overstepped to trigger the downsampling.
+# the second element in the respective resampling interval.
+DOWNSAMPLING = [
+    (np.timedelta64(60, "D"), "2h"),
+    (np.timedelta64(30, "D"), "1h"),
+    (np.timedelta64(14, "D"), "30min"),
+    (np.timedelta64(5, "D"), "10min"),
+]
 
 # entire dataset is cached and held in memory.
 # if it was much bigger, periods with from/to could be cached instead.
@@ -39,7 +48,6 @@ def load_data():
     timestamps = timestamps + TIME_OFFSET  # shift everything 1 year into the future to have fake prediction values
     heating_data.index = timestamps
     heating_data.index = heating_data.index.tz_convert(PROJECT_TIMEZONE)
-    heating_data["heating_up_prev"] = heating_data["heating_up"].shift(1).fillna(False)
     heating_data[BUFFER_AVG] = (heating_data[BUFFER_MAX] + heating_data[BUFFER_MIN]) / 2
     return heating_data.sort_index()
 
@@ -79,15 +87,24 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
     """
     period_from, period_to = pd.to_datetime(period_from), pd.to_datetime(period_to)
 
-    data = load_data()[period_from:period_to]
+    data = load_data().drop(HEATING_UP, axis=1)[period_from:period_to]
     current = data.iloc[-1]
-    predicted = load_data()[period_to:period_to + PREDICTED_PERIOD]
 
-    during_heating_up = predicted.query("heating_up")
+    timespan = period_to - period_from
+    # first matching resample interval whose condition matches (queried period length is longer then its condition)
+    resample_interval = next((interval for condition, interval in DOWNSAMPLING if timespan >= condition), None)
+
+    if resample_interval:
+        data = data.resample(resample_interval).median()
+
+    predicted = load_data()[period_to:period_to + PREDICTED_PERIOD]
+    during_heating_up = predicted.query(HEATING_UP)
+    predicted = predicted.drop(HEATING_UP, axis=1)  # not needed anymore after it got queried
+
     # if the prediction contains a heating process, we want to replace that part of it with a pre-defined prediction.
     # these pre-defined predictions are snippets of real data, namely in the places that go to the lowest temperature
-    # naturally in the dataset. This means every other progression ends descending (= starts heating up again) before
-    # the templates so the templates can be added onto the end with less fear of not finding a continuation point.
+    # naturally in the dataset. This means every other progression ends descending (=starts heating up again) before the
+    # templates so the templates can be added onto the end with less chance of not finding a good continuation point.
     if not during_heating_up.empty:
         summer_pred, winter_pred = load_prediction_templates()
         # select correct prediction template; in summer it's much longer and less steep than in winter
@@ -104,8 +121,9 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
         prediction_template = prediction_template[best_match_in_template:template_prediction_end_time]
         # move predicted times to the cut off point
         prediction_template.index = prediction_template.index - (prediction_template.index[0] - first_time_heating_up)
-        # cut off from the point of first heating up and add prediction template from best matching time until the end
-        predicted = pd.concat([predicted[:first_time_heating_up], prediction_template])
+        # cut data at the point of first heating up and add prediction template from best matching time until the end.
+        # The subtraction of 1 second is to avoid duplicates when the time matches exactly.
+        predicted = pd.concat([predicted[:first_time_heating_up-np.timedelta64(1, "s")], prediction_template])
 
     return current, data, predicted
 
