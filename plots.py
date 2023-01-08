@@ -59,7 +59,6 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
     all_data = pd.concat([data, predicted])
     fig = go.Figure(layout=go.Layout(
         hovermode="x",
-        xaxis_title_text=LABELS[TIME],  # wrongly type annotated kwargs in Plotly library
         yaxis=go.layout.YAxis(
             range=ylim,
             title_text=TEMPERATURE_LABEL,  # wrongly type annotated kwargs in Plotly library
