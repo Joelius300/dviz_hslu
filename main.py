@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, time
 
+import numpy as np
 import streamlit as st
 
 from data import earliest_time, get_period, projected_hit_times, BUFFER_AVG, BUFFER_MIN
@@ -47,6 +48,8 @@ with to_time_col:
 
 date_from = date_period[0]
 if len(date_period) < 2:
+    # this treats clicking just one day and then deselecting the same as double-clicking that day. Alternatively,
+    # execution could be halted with an error here. No idea why streamlit runs again with an incomplete range selected.
     date_to = date_from
 else:
     date_to = date_period[1]
@@ -62,6 +65,15 @@ with lower_threshold_col:
 with upper_threshold_col:
     upper_threshold = st.number_input("Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
     # TODO Constrain upper threshold to be above lower threshold
+
+if (period_to - period_from) < np.timedelta64(5, "m"):
+    st.write("Please select a longer period.")
+    st.stop()
+
+if lower_threshold >= upper_threshold:
+    # Unfortunately I didn't find a way to do "client-side" validation for this (so that you cannot even select wrongly)
+    st.write("Lower threshold must be below upper threshold.")
+    st.stop()
 
 thresholds = Thresholds(upper_threshold, lower_threshold)
 
