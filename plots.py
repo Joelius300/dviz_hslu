@@ -99,15 +99,15 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hi
     rows_in_one_hour = int(np.timedelta64(1, 'h') / np.timedelta64(FAN_RESAMPLE_INTERVAL_MIN, 'm'))
 
     # take the max/min over 1 hour rolling
-    bounds['upper'] = bounds['upper'].rolling(rows_in_one_hour).max()
-    bounds['lower'] = bounds['lower'].rolling(rows_in_one_hour).min()
+    bounds['upper'] = bounds['upper'].rolling(rows_in_one_hour, min_periods=1).max()
+    bounds['lower'] = bounds['lower'].rolling(rows_in_one_hour, min_periods=1).min()
 
     # an alternate solution which was explored is resampling again but this often results in predicted points
     # outside the prediction bounds when plotted with linear lines. Therefore, a higher resolution is used but smoothed.
     # bounds = bounds.resample("1h").apply({'upper': lambda g: g.max(), 'lower': lambda g: g.min()})
 
     # take a moving average over 1 hour rolling to smooth it out
-    bounds = bounds.rolling(rows_in_one_hour).mean()
+    bounds = bounds.rolling(rows_in_one_hour, min_periods=2).mean()
 
     # ensure the bounds aren't outside the values
     bounds['upper'] = bounds['upper'].clip(lower=values)
@@ -115,7 +115,8 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hi
 
     # ensure the fan has a smooth start from the initial prediction position after all the aggregation & smoothing
     first_temp, first_index = predicted[column].iloc[0], predicted.index[0]
-    bounds = pd.concat([pd.DataFrame({'upper': [first_temp], 'lower': [first_temp]}, index=[first_index]), bounds])
+    bounds = pd.concat([pd.DataFrame({'upper': [first_temp], 'lower': [first_temp]}, index=[first_index]),
+                        bounds[first_index+np.timedelta64(1, "s"):]])  # add a second to avoid collisions/duplicates
 
     shared_trace_props = dict(
         x=bounds.index,
