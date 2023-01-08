@@ -89,7 +89,7 @@ st.write(construct_action_phrase(hit_times, period_to, thresholds, SUGGESTED_FIR
 col_stored_energy, col_drinking_water = st.columns(2)
 
 with col_stored_energy:
-    st.subheader("Stored energy")
+    st.subheader("Buffer")
 
     # fig = create_temperature_gauge(current, earlier, BUFFER_MAX, lower_threshold, upper_threshold)
     # st.plotly_chart(fig)
