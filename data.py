@@ -97,7 +97,7 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
     resample_interval = next((interval for condition, interval in DOWNSAMPLING if timespan >= condition), None)
 
     if resample_interval:
-        data = data.resample(resample_interval).median()
+        data = data.resample(resample_interval).median().dropna()  # ignore na after resample, plot does free LERP
 
     predicted = load_data()[period_to:period_to + PREDICTED_PERIOD]
     during_heating_up = predicted.query(HEATING_UP)

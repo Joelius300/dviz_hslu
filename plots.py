@@ -89,8 +89,8 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
 
 
 def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hidden=False):
-    # resample to decrease resolution
-    values = predicted[column].resample(f'{FAN_RESAMPLE_INTERVAL_MIN}min').median()
+    # resample to decrease resolution (drop na, the plot just connects all points so basically free LERP)
+    values = predicted[column].resample(f'{FAN_RESAMPLE_INTERVAL_MIN}min').median().dropna()
 
     fan_deltas = FAN_INCREASE_PER_MINUTE[:len(values)] * FAN_RESAMPLE_INTERVAL_MIN
     bounds = pd.DataFrame({'upper': values + fan_deltas, 'lower': values - fan_deltas}, index=values.index)
