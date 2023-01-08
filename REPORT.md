@@ -50,39 +50,6 @@ intuitive and helpful visualization around the data I collected.
 The different components for extracting the data, storing it, making it consumable (API) and displaying it (web UI / dashboard),
 etc. are all [Open Source](https://github.com/Joelius300/HeatingDataMonitor).
 
-## Data exploration
-
-This dataset has had my interest for quite a while now and I have already done some data exploration
-and data analysis outside of this module. The many hours I have invested into this already were mostly
-for my personal interest and general analysis of the dataset so I was able to use it in multiple modules.
-In the work summary, I have only written down hours for the data exploration and data analysis where
-DVIZ was an intended primary beneficiary. For the analysis done specifically for other modules I have of
-course still taken the insights into account if they were relevant but did not count the hours towards
-this project.
-
-### Key findings
-
-#### Meaning of columns
-
-Some columns required investigation to interpret correctly. One of which is the operation state of the furnace ("betriebsphase_kessel"), which uses an undocumented
-discrete number encoding. In this project this column was used indirectly by reducing it to a boolean "heating_up" to rectify impossible predictions.
-
-Here are the meanings of the used columns:
-
-- received_time: Time my system received this state of the heating unit in UTC
-- buffer_max: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending). Used for determining the stored energy.
-- buffer_min: Like buffer_max but lowest point of the buffer (usally lowest temperature)
-- drinking_water: Temperature in °C of drinking water inside boiler at the highest point (highest temperature)
-- heating_up: Whether the heating unit is in the process of heating up, initiated by hand
-
-
-#### Heating progression to lowest point
-
-In order to avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle that went as low as possible for the most relevant columns.
-This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions. Heating up in a prediction is invalid because it could
-only happen if the user manually fired up and the user wants to see the progression if they don't fire up.
-
-
 ## Target audience
 
 The target audience is my family with my dad being the most important stakeholder as he manages the heating unit the most. \
@@ -142,6 +109,40 @@ an inspection of the analog hardware sensors spread across the buffer is necessa
 
 On the dashboard there should be an option to show the buffer min for a rough estimation on the stored energy in the buffer. Due to the unknown distribution,
 this is verbose and often optional information, which requires good knowledge of the system, and should be represented as such. 
+
+## Data exploration
+
+This dataset has had my interest for quite a while now and I have already done some data exploration
+and data analysis outside of this module. The many hours I have invested into this already were mostly
+for my personal interest and general analysis of the dataset so I was able to use it in multiple modules.
+In the work summary, I have only written down hours for the data exploration and data analysis where
+DVIZ was an intended primary beneficiary. For the analysis done specifically for other modules I have of
+course still taken the insights into account if they were relevant but did not count the hours towards
+this project.
+
+### Key findings
+
+#### Meaning of columns
+
+Some columns required investigation to interpret correctly. One of which is the operation state of the furnace ("betriebsphase_kessel"), which uses an undocumented
+discrete number encoding. In this project this column was used indirectly by reducing it to a boolean "heating_up" to rectify impossible predictions.
+
+Here are the meanings of the used columns:
+
+- received_time: Time my system received this state of the heating unit in UTC
+- buffer_max: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending). Used for determining the stored energy.
+- buffer_min: Like buffer_max but lowest point of the buffer (usally lowest temperature)
+- drinking_water: Temperature in °C of drinking water inside boiler at the highest point (highest temperature)
+- heating_up: Whether the heating unit is in the process of heating up, initiated by hand
+
+
+#### Heating progression to lowest point
+
+In order to avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle that went as low as possible for the most relevant columns.
+This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions. Heating up in a prediction is invalid because it could
+only happen if the user manually fired up and the user wants to see the progression if they don't fire up.
+
+
 
 
 ## Visualization breakdown
