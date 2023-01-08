@@ -1,4 +1,4 @@
-# DVIZ HSLU HS22 - Joel L.
+# DVIZ HSLU HS22 - Joel L
 
 ## META - TO REMOVE
 
@@ -17,7 +17,7 @@ PUT SOMEWHERE
 
 Wäg colorblindness:
 
-https://www.color-blindness.com/coblis-color-blindness-simulator/
+<https://www.color-blindness.com/coblis-color-blindness-simulator/>
 
 viläch fingsch no besseri farbe süsch zmingst sägä dasmä dür klicke cha usprobiere und usefinge was was isch.
 zum verwirrig z minimiere hiuft da o das d y-achse limits fix si das züg nid mega resized we d uswau vo lines verändert wird.
@@ -66,7 +66,6 @@ Some key information about my father as the target audience:
 - Decisions to make: When to fire up the furnace, when to get more wood (no data available)
 - Current tools: Knowledge and experience, basic dashboard built by me
 
-
 ### Status quo
 
 Before discussing the takeaways from the meeting, here is a brief explanation of the heating system in place.
@@ -75,7 +74,6 @@ Our house has both floor heating and radiators. Additionally a storage water hea
 outlets in the house. To provide heat to them, a log heating unit is in place which regularly has to be filled up with wood and lit on fire manually. As is custom,
 the heat generated from burning the wood isn't (all) used to supply the heating circuits and storage water heater but is transferred into a buffer storage where
 3000 liters of heating water are kept. The heat from this buffer is used to provide hot water to the consuming systems when the furnace isn't burning.
-
 
 ### Key takeaways
 
@@ -108,7 +106,7 @@ or closer to the lowest temperature. When buffer max and buffer min are substant
 an inspection of the analog hardware sensors spread across the buffer is necessary to determine the best course of action.
 
 On the dashboard there should be an option to show the buffer min for a rough estimation on the stored energy in the buffer. Due to the unknown distribution,
-this is verbose and often optional information, which requires good knowledge of the system, and should be represented as such. 
+this is verbose and often optional information, which requires good knowledge of the system, and should be represented as such.
 
 ## Data exploration
 
@@ -135,15 +133,11 @@ Here are the meanings of the used columns:
 - drinking_water: Temperature in °C of drinking water inside boiler at the highest point (highest temperature)
 - heating_up: Whether the heating unit is in the process of heating up, initiated by hand
 
-
-#### Heating progression to lowest point
+#### Heating progression to the lowest point
 
 In order to avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle that went as low as possible for the most relevant columns.
 This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions. Heating up in a prediction is invalid because it could
 only happen if the user manually fired up and the user wants to see the progression if they don't fire up.
-
-
-
 
 ## Visualization breakdown
 
