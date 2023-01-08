@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from numbers import Number
-from typing import List, Tuple
+from typing import List, Tuple, Literal
 
 import humanize
 import numpy as np
@@ -24,7 +24,9 @@ BUFFER_MAX_COLOR = (255, 165, 0)  # "orange"
 BUFFER_MIN_COLOR = (30, 144, 255)  # "dodgerblue"
 BUFFER_AVG_COLOR = (50, 205, 50)  # "limegreen"
 
-THRESHOLD_LINE_COLOR = "dark gray"  # todo this color/opacity here i don't like very much
+THRESHOLD_LINE_COLOR = "dark gray"
+THRESHOLD_LINE_DASH = "dot"
+THRESHOLD_LINE_OPACITY = .8
 
 PREDICTION_SHADOW_COLOR = (227, 227, 232)  # secondary background (chart background) = (240, 242, 246) - (13, 15, 14)
 PREDICTION_SHADOW_OPACITY = 1
@@ -81,8 +83,8 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
         for col, hidden in columns:
             add_temperature_line(col, hidden)
 
-    _add_threshold_line(fig, thresholds.lower)
-    _add_threshold_line(fig, thresholds.upper)
+    _add_threshold_line(fig, thresholds.lower, "Lower")
+    _add_threshold_line(fig, thresholds.upper, "Upper")
     _add_prediction_shadow(fig, data.index[0], predicted.index[0])
 
     return fig
@@ -115,7 +117,7 @@ def _add_prediction_fan(fig: Figure, predicted: pd.DataFrame, column: str, *, hi
     # ensure the fan has a smooth start from the initial prediction position after all the aggregation & smoothing
     first_temp, first_index = predicted[column].iloc[0], predicted.index[0]
     bounds = pd.concat([pd.DataFrame({'upper': [first_temp], 'lower': [first_temp]}, index=[first_index]),
-                        bounds[first_index+np.timedelta64(1, "s"):]])  # add a second to avoid collisions/duplicates
+                        bounds[first_index + np.timedelta64(1, "s"):]])  # add a second to avoid collisions/duplicates
 
     shared_trace_props = dict(
         x=bounds.index,
@@ -160,8 +162,21 @@ def _add_prediction_shadow(fig: Figure, start, end):
     ))
 
 
-def _add_threshold_line(fig: Figure, threshold: float | int):
-    fig.add_hline(threshold, line_dash="dash", line_color=THRESHOLD_LINE_COLOR)
+def _add_threshold_line(fig: Figure, threshold: float | int, threshold_name: Literal["Lower", "Upper"]):
+    fig.add_hline(threshold,
+                  line_dash=THRESHOLD_LINE_DASH,
+                  line_color=THRESHOLD_LINE_COLOR,
+                  opacity=THRESHOLD_LINE_OPACITY,
+                  annotation_position="top right",
+                  annotation=go.layout.Annotation(
+                      text=f"{threshold_name} threshold",
+                      hovertext=f"{threshold} °C",
+                      # hacky way to force annotation outside the plot area onto the legend.
+                      # values are designed only for 'Lower threshold' and 'Upper threshold', which
+                      # conveniently have the same number of letters. Couldn't find a prettier way sadly.
+                      xshift=90,
+                      yshift=-10
+                  ))
 
 
 def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
