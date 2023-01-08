@@ -8,16 +8,13 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 import pandas as pd
 
-from data import BUFFER_MIN, BUFFER_AVG, TIME, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
+from data import BUFFER_MIN, BUFFER_AVG, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
 from shared import is_in_winter_mode, HitTimes, Thresholds, rgba, rgb
 
-TIME_LABEL = "Time"
 DRINKING_WATER_LABEL = "Drinking water"
 BUFFER_MAX_LABEL = "Buffer max"
 BUFFER_MIN_LABEL = "Buffer min"
 BUFFER_AVG_LABEL = "Buffer avg"
-
-TEMPERATURE_LABEL = "Temperature [°C]"
 
 DRINKING_WATER_COLOR = (0, 0, 139)  # "darkblue"
 BUFFER_MAX_COLOR = (255, 165, 0)  # "orange"
@@ -39,7 +36,6 @@ FAN_INCREASE_PER_MINUTE = np.arange(1, PREDICTED_PERIOD / np.timedelta64(1, 's')
 FAN_RESAMPLE_INTERVAL_MIN = 10
 
 LABELS = {
-    TIME: TIME_LABEL,
     DRINKING_WATER: DRINKING_WATER_LABEL,
     BUFFER_MAX: BUFFER_MAX_LABEL,
     BUFFER_MIN: BUFFER_MIN_LABEL,
@@ -63,14 +59,16 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
         hovermode="x",
         yaxis=go.layout.YAxis(
             range=ylim,
-            title_text=TEMPERATURE_LABEL,  # wrongly type annotated kwargs in Plotly library
+            ticksuffix=" °C",
         ),
         margin=go.layout.Margin(
             t=40, b=0,  # just enough for the Plotly menu bar
+            l=40, r=0,  # compensate for the removed axis title
         ),
         height=plot_height,
         width=plot_width,
-        legend_traceorder="grouped",  # group temperatures with their prediction fans in legend (wrong annotation again)
+        # group temperatures with their prediction fans in legend (wrong type annotation by Plotly)
+        legend_traceorder="grouped",
     ))
 
     def add_temperature_line(col, hidden=False):
