@@ -90,8 +90,9 @@ If it is below 30 °C, it's certainly necessary to fire up, otherwise the house 
 If it is between, it depends on many more factors. Those factors include the number of people at home in the next days, whether a bath is desired,
 the current and predicted weather, and more.
 
-These thresholds alongside with a prediction can be used to recommend an optimal time to fire up the furnace. Still, a more detailed view of the data
-should be available to assist manual decision-making with respect to the factors for which there is no data available.
+These thresholds alongside with a prediction can be used to recommend an optimal time to fire up the furnace.
+Still, a more detailed view of the data should be available to assist manual decision-making
+with respect to the factors for which there is no data available.
 
 #### Unknown temperature distribution in buffer
 
@@ -99,14 +100,16 @@ For heating up other systems, hot water is taken from the top of the buffer (flo
 buffer (return). When heating up the floor heating and the radiators, a lot of heat is lost, and the return is much colder than the flow leading to a low temperature
 at the bottom of the buffer where the bottom sensor is. This can lead to negative spikes in buffer min before the water mixes and layers again.
 On the other hand, when the water goes around the storage water heater to heat the water inside, it doesn't
-lose nearly as much energy and the return is often warmer than the water previously at the bottom of the buffer. Respectively, this causes positive spikes in
-buffer min that correlate with an increase in the drinking water temperature. \
+lose nearly as much energy and the return is often warmer than the water previously at the bottom of the buffer.
+Respectively, this causes positive spikes in buffer min that correlate with an increase in the drinking water temperature. \
 Because of these processes happening at different intervals, it's very hard to determine if the majority of the water in the buffer is closer to the warmest,
-or closer to the lowest temperature. When buffer max and buffer min are substantially different, especially when the upper threshold has already been crossed,
-an inspection of the analog hardware sensors spread across the buffer is necessary to determine the best course of action.
+or closer to the lowest temperature. When buffer max and buffer min are substantially different,
+an inspection of the analog hardware sensors spread across the buffer may be necessary to determine the best
+course of action, especially when the upper threshold has already been crossed.
 
-On the dashboard there should be an option to show the buffer min for a rough estimation on the stored energy in the buffer. Due to the unknown distribution,
-this is verbose and often optional information, which requires good knowledge of the system, and should be represented as such.
+On the dashboard, there should be an option to show the buffer min for a rough estimation on the stored energy
+in the buffer. Due to the unknown distribution, this is verbose and often optional information,
+which requires good knowledge of the system, and should be represented as such.
 
 ## Data exploration
 
@@ -140,6 +143,58 @@ This heating progression (highest to lowest point) is then used to replace inval
 only happen if the user manually fired up and the user wants to see the progression if they don't fire up.
 
 ## Visualization breakdown
+
+To help with the decision of when to fire up, a dashboard was built. It is designed to display the state of the
+heating unit in the past and coming few days, with a recommended action as well as interactive charts
+to explore the data and make decisions. Thanks to customizable thresholds, the recommendations can be tweaked anytime. \
+It also allows exploring times in the past, in which case the end of the selected period is treated as if it
+were the current time, to simulate how the dashboard would look at different times. If it were a productive system,
+data would continuously be added and past periods would be treated differently than current ones.
+
+TODO öppis über d recommended action schribe
+
+### Temperature charts
+
+The temperature charts are line charts, inspired by the MeteoSwiss mobile weather forecasting chart.
+Aside from me simply liking the MeteoSwiss chart, taking inspiration from an app this
+wide-spread also brings familiarity to the user, which makes the visualization more intuitive.
+
+A line was used to plot the time series data as a progression of a data point over time. In the case
+of this dashboard, the shape of the line is rather simple, especially for the two main values "buffer max"
+and "drinking water" within the default period. This allows the user to quickly pick up trends visually
+and find the highest and lowest temperatures, which are all important factors in deciding
+whether firing up is necessary. Thanks to human's strength in interpreting position and slope encodings,
+a chart like this can be interpreted quickly and accurately.
+
+Using a slightly darker background, the values in the past are visually separated from the prediction. \
+Said prediction continues the line at the same point with the same color (Gestalt principles) and adds
+a fan to show the growing uncertainty in the prediction. This fan isn't fully opaque and uses the line's
+color, to once again show they belong together.
+
+Two horizontal dashed lines visualize the upper and lower thresholds and enable the user to estimate the
+time of crossing. It doesn't need to be more precise at first glance because of the
+inherent inaccuracy of the prediction and the possibility to zoom in if desired.
+
+On the buffer chart a total of three lines are available to display with two of them being hidden by default,
+as represented by the less opaque legend entry. Although not directly next to the lines, the items
+in the legend follow the logical sort order descending and also represent the relative positions
+of the respective lines (max > avg > min).
+
+The charts are zoomable and pannable with additional options such as download as image and full-screen.
+
+For larger time periods, the data is aggregated before plotting to improve performance.
+
+## Shortcomings
+
+weiss nii.. viläch das scrappe o eif wägm platz
+
+### Fake predictions
+
+The predictions are simply real periods of data that were shifted into the future.
+To avoid predicting a heating up process, a simple algorithm replaces that part with a pre-defined template.
+
+Unfortunately, this means the prediction falls apart during a heating up process and a real model would be
+much more interesting and hopefully accurate.
 
 ## Tools and libraries
 
