@@ -1,6 +1,10 @@
 from datetime import datetime
 from typing import Optional, NamedTuple
 
+import pytz
+
+PROJECT_TIMEZONE = pytz.timezone("Europe/Zurich")
+
 
 class ThresholdCrossings(NamedTuple):
     upper: Optional[datetime]

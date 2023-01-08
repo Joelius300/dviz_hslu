@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from project_constants import PROJECT_TIMEZONE
-from shared import is_in_winter_mode, HitTimes, Thresholds, ThresholdCrossings
+from shared import is_in_winter_mode, HitTimes, Thresholds, ThresholdCrossings, PROJECT_TIMEZONE
 
 CSV_PATH = "data/heating-data_cleaned.csv"
 SUMMER_PREDICTION_CSV_PATH = "data/summer_prediction.csv"
@@ -34,6 +33,7 @@ DOWNSAMPLING = [
     (np.timedelta64(14, "D"), "30min"),
     (np.timedelta64(5, "D"), "10min"),
 ]
+
 
 # entire dataset is cached and held in memory.
 # if it was much bigger, periods with from/to could be cached instead.
@@ -125,7 +125,7 @@ def get_period(period_from: datetime, period_to: datetime) -> Tuple[pd.Series, p
         prediction_template.index = prediction_template.index - (prediction_template.index[0] - first_time_heating_up)
         # cut data at the point of first heating up and add prediction template from best matching time until the end.
         # The subtraction of 1 second is to avoid duplicates when the time matches exactly.
-        predicted = pd.concat([predicted[:first_time_heating_up-np.timedelta64(1, "s")], prediction_template])
+        predicted = pd.concat([predicted[:first_time_heating_up - np.timedelta64(1, "s")], prediction_template])
 
     return current, data, predicted
 

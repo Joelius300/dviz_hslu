@@ -4,10 +4,11 @@ import streamlit as st
 
 from data import earliest_time, get_period, projected_hit_times, BUFFER_AVG, BUFFER_MIN
 from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase
-from project_constants import PROJECT_TITLE, PROJECT_TIMEZONE
-from shared import Thresholds
+from shared import Thresholds, PROJECT_TIMEZONE
 
-DEFAULT_DATE_OFFSET = timedelta(days=2)
+PROJECT_TITLE = "Heating unit dashboard"
+
+DEFAULT_DATE_OFFSET = timedelta(days=3)
 DEFAULT_LOWER_THRESHOLD = 30
 DEFAULT_UPPER_THRESHOLD = 40
 
@@ -25,7 +26,8 @@ SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 st.set_page_config(layout="wide")
 
-today = datetime.utcnow().date()
+now = datetime.now(PROJECT_TIMEZONE)
+today = now.date()
 
 st.title(PROJECT_TITLE)
 
@@ -38,10 +40,10 @@ with period_col:
                                 max_value=today)
 
 with from_time_col:
-    time_from = st.time_input("Time from", value=time(0, 0, 0))
+    time_from = st.time_input("Time from", value=now.time())
 
 with to_time_col:
-    time_to = st.time_input("Time to", value=time(23, 59, 59))
+    time_to = st.time_input("Time to", value=now.time())
 
 date_from = date_period[0]
 if len(date_period) < 2:
