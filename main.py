@@ -13,6 +13,9 @@ DEFAULT_DATE_OFFSET = timedelta(days=3)
 DEFAULT_LOWER_THRESHOLD = 30
 DEFAULT_UPPER_THRESHOLD = 40
 
+# date_input always formats as %Y/%m%d apparently so we cope: https://github.com/streamlit/streamlit/issues/5234
+DATE_FORMAT = "%Y/%m/%d"
+
 # plot dimensions in pixels for two column layout in wide mode.
 # Designed for full-hd screens (1920x1080) as responsiveness was not a requirement and hard to get right with Plotly.
 PLOT_HEIGHT = 400
@@ -35,16 +38,10 @@ st.title(PROJECT_TITLE)
 period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = st.columns([2, 1, 1, 1, 1])
 
 with period_col:
-    date_period = st.date_input("Period",
+    date_period = st.date_input("Period date range",
                                 (today - DEFAULT_DATE_OFFSET, today),
                                 min_value=earliest_time(),
                                 max_value=today)
-
-with from_time_col:
-    time_from = st.time_input("Time from", value=now.time())
-
-with to_time_col:
-    time_to = st.time_input("Time to", value=now.time())
 
 date_from = date_period[0]
 if len(date_period) < 2:
@@ -53,6 +50,13 @@ if len(date_period) < 2:
     date_to = date_from
 else:
     date_to = date_period[1]
+
+with from_time_col:
+    time_from = st.time_input(f"Period start time (on {date_from:{DATE_FORMAT}})")
+
+with to_time_col:
+    time_to = st.time_input(f"Period end time (on {date_to:{DATE_FORMAT}})")
+
 
 period_from = datetime.combine(date_from, time_from)
 period_to = datetime.combine(date_to, time_to)
