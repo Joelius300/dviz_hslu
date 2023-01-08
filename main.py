@@ -68,7 +68,6 @@ with lower_threshold_col:
 
 with upper_threshold_col:
     upper_threshold = st.number_input("Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
-    # TODO Constrain upper threshold to be above lower threshold
 
 if (period_to - period_from) < np.timedelta64(5, "m"):
     st.write("Please select a longer period.")
