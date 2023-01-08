@@ -1,6 +1,6 @@
 Date,Hours,Task
--,10,Data exploration and analysis from before (I invested x times more hours but this is just a small acknowledgement)
-05.11.22,2.5,Usage analysis with my dad (the user of the visualization in the end)
+-,5,Data exploration and analysis from before (I invested x times more but this is just a small acknowledgement)
+05.11.22,2.5,Usage analysis with my dad (supposed user of the visualization in the end)
 09.11.22,1,"Setup git repo, report structure and organize required files e.g. requirements for the project etc."
 13.11.22,1,Data exploration and analysis
 14.11.22,3,"Data exploration and analysis, playing around with Grafana to prototype"
@@ -11,7 +11,8 @@ Date,Hours,Task
 12.12.22,3,Streamlit and Plotly implementation
 01.01.23,0.5,Streamlit and Plotly implementation (thresholds)
 02.01.23,6,Streamlit and Plotly implementation (predictions setup)
-03.01.23,6,Streamlit and Plotly implementation (predictions plotting)
-05.01.23,1,Streamlit and Plotly implementation (detailed checkbox with additional plots)
+03.01.23,6,"Streamlit and Plotly implementation (predictions plotting), Report"
+05.01.23,1,Streamlit and Plotly implementation (add buffer_min and buffer_avg)
 06.01.23,5,Streamlit and Plotly implementation (predictions styling)
 07.01.23,7,Streamlit and Plotly implementation (styling and code cleanup)
+08.01.23,6,"Streamlit and Plotly implementation (styling), Report"
