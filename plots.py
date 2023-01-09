@@ -19,7 +19,7 @@ BUFFER_AVG_LABEL = "Buffer avg"
 DRINKING_WATER_COLOR = (0, 0, 139)  # "darkblue"
 BUFFER_MAX_COLOR = (255, 165, 0)  # "orange"
 BUFFER_MIN_COLOR = (30, 144, 255)  # "dodgerblue"
-BUFFER_AVG_COLOR = (230, 160, 288)  # a pink - previously (50, 205, 50)  # "limegreen"
+BUFFER_AVG_COLOR = (230, 160, 288)  # some pink - previously (50, 205, 50)  # "limegreen"
 
 THRESHOLD_LINE_COLOR = "dark gray"
 THRESHOLD_LINE_DASH = "dot"
@@ -54,6 +54,20 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
                                   columns: str | List[Tuple[str, bool]], ylim: List[int],
                                   thresholds: Thresholds,
                                   plot_height: int, plot_width: int) -> Figure:
+    """
+    Creates a Plotly chart displaying one or more temperature time-series. Data up to the present time is
+    plotted with a slightly darker background. Predicted data is plotted with an additional fan to show increasing
+    uncertainty over time. Additionally, temperature thresholds are plotted as horizontal lines.
+
+    :param data: The data in the past (up to now) with a time-index and the columns specified in 'columns'.
+    :param predicted: The predicted data following directly after 'data' also with a time-index and the same columns.
+    :param columns: List of columns to plot (can also be a single column as string).
+    :param ylim: The inital y-limits to set. Must be a list with two items: [lower_limit, upper_limit]
+    :param thresholds: The temperature thresholds to plot.
+    :param plot_height: The height of the chart in pixels.
+    :param plot_width: The width of the chart in pixels.
+    :return: A Plotly Figure representing the created chart.
+    """
     all_data = pd.concat([data, predicted])
     fig = go.Figure(layout=go.Layout(
         hovermode="x",
@@ -72,7 +86,7 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
     ))
 
     def add_temperature_line(col, hidden=False):
-        fig.add_trace(_get_line(all_data, col, rgb(*COLORS[col]), hidden=hidden))
+        fig.add_trace(_create_line_trace(all_data, col, rgb(*COLORS[col]), hidden=hidden))
         _add_prediction_fan(fig, predicted, col, hidden=hidden)
 
     if isinstance(columns, str):
@@ -177,7 +191,7 @@ def _add_threshold_line(fig: Figure, threshold: float | int, threshold_name: Lit
                   ))
 
 
-def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
+def _create_line_trace(data: pd.DataFrame, column: str, color, *, hidden=False):
     trace = go.Scatter(x=data.index,
                        y=data[column],
                        mode="lines",
@@ -192,28 +206,10 @@ def _get_line(data: pd.DataFrame, column: str, color, *, hidden=False):
     return trace
 
 
-# todo nuke?
-def create_temperature_gauge(current, earlier, column, lower_threshold, upper_threshold):
-    fig = go.Figure(go.Indicator(
-        domain={'x': [0, 1], 'y': [0, 1]},
-        value=current[column],
-        mode="gauge+number+delta",
-        title={'text': LABELS[column]},
-        delta={'reference': earlier[column]},
-        gauge={'axis': {'range': [20, 60]},
-               'steps': [
-                   {'range': [0, lower_threshold], 'color': "red"},
-                   {'range': [lower_threshold, upper_threshold], 'color': "orange"}],
-               'threshold': {'line': {'color': "white", 'width': 4}, 'thickness': 0.75, 'value': current[column]}
-               }))
-
-    return fig
-
-
 def construct_action_phrase(hit_times: HitTimes, current_time: datetime, thresholds: Thresholds,
                             suggested_fire_up_time_before_threshold_cross: timedelta) -> str:
     """
-    Constructs a phrase (str) describing the recommended action with relative times and additional information.
+    Constructs a phrase (markdown str) describing the recommended action with relative times and additional information.
 
     :param hit_times: The projected hit times (return value of projected_hit_times())
     :param current_time: The (simulated) current time -> end of selected period
