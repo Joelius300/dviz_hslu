@@ -208,15 +208,18 @@ def _create_line_trace(data: pd.DataFrame, column: str, color, *, hidden=False):
 
 
 def construct_action_phrase(hit_times: HitTimes, current_time: datetime, thresholds: Thresholds,
-                            suggested_fire_up_time_before_threshold_cross: timedelta) -> str:
+                            suggested_fire_up_time_before_threshold_cross: timedelta, font_size="1rem") -> str:
     """
-    Constructs a phrase (markdown str) describing the recommended action with relative times and additional information.
+    Constructs a phrase (html str) describing the recommended action with relative times and additional information.
+    It has to be HTML to incorporate the font-size; Unfortunately, there is no option in streamlit to set an arbitrary
+    font-size for text written in markdown.
 
     :param hit_times: The projected hit times (return value of projected_hit_times())
     :param current_time: The (simulated) current time -> end of selected period
     :param thresholds: The thresholds to cross. Must be the same thresholds used for calculating hit_times.
     :param suggested_fire_up_time_before_threshold_cross: Time delta between suggested firing-up-time and threshold-cross-time.
-    :return: A human-readable phrase in the form of a string.
+    :param font_size: A valid CSS font-size the phrase should have. No validation, make sure it's right.
+    :return: A safe HTML string which represents a human-readable phrase for when to fire up again.
     """
     relevant_column = BUFFER_MAX if is_in_winter_mode(current_time) else DRINKING_WATER
     relevant_label = LABELS[relevant_column]
@@ -237,11 +240,11 @@ def construct_action_phrase(hit_times: HitTimes, current_time: datetime, thresho
         fire_up_time = lower_hit - suggested_fire_up_time_before_threshold_cross
         fire_up_delta = fmt_delta(fire_up_time) if fire_up_time > current_time else "as soon as possible"
 
-        action_phrase = f"You should fire up **{fire_up_delta}**."
+        action_phrase = f"You should fire up <strong>{fire_up_delta}</strong>."
         cross_phrase = fmt_cross_phrase("lower", thresholds.lower, lower_hit)
     elif upper_hit:
         cross_phrase = fmt_cross_phrase("upper", thresholds.upper, upper_hit)
     else:
         return action_phrase
 
-    return f"{action_phrase} {cross_phrase}"
+    return f'<p style="font-size: {font_size}">{action_phrase} {cross_phrase}</p>'

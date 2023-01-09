@@ -103,7 +103,9 @@ thresholds = Thresholds(upper_threshold, lower_threshold)
 hit_times = projected_hit_times(data, predicted, thresholds)
 
 # recommendation phrase
-st.markdown(construct_action_phrase(hit_times, period_to, thresholds, SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS))
+# requires unsafe html flag; it's apparently not possible to customize the font size of text content otherwise.
+st.markdown(construct_action_phrase(hit_times, period_to, thresholds, SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS,
+                                    font_size="1.2rem"), unsafe_allow_html=True)
 
 # temperature charts
 col_stored_energy, col_drinking_water = st.columns(2)
