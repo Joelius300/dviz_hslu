@@ -216,20 +216,24 @@ The charts are zoomable and pannable with additional options such as download as
 
 For larger time periods, the data is aggregated before plotting to improve performance.
 
-## Shortcomings
-
-weiss nii.. viläch das scrappe o eif wägm platz
-
-### Fake predictions
-
-The predictions are simply real periods of data that were shifted into the future.
-To avoid predicting a heating up process, a simple algorithm replaces that part with a pre-defined template.
-
-Unfortunately, this means the prediction falls apart during a heating up process and a real model would be
-much more interesting and hopefully accurate.
+If it was an app, notifications would be a great way to let the user know it's time to heat up but
+this is outside the scope of this project and dashboard.
 
 ## Tools and libraries
 
-which and why
+### Streamlit
+
+Streamlit is advertised as a framework to create data apps quickly and simply.
+Unlike a data story, this dashboard does not rely on extensive customization on the
+layout layer, which a more complex / low-level framework like Dash would allow.  
+Since I had no previous experience or knowledge about either contender (Streamlit vs Dash),
+I decided to stick with the simpler but less customizable option without regrets.
+
+### Plotly
+
+Plotly is a powerful charting library for creating interactive visualizations using JavaScript.
+Thanks to its good Python bindings and great integration into Streamlit, it was a high contender
+from the beginning. With its interactivity it beat out the known framework Matplotlib, and with its
+popularity and appearance in the module it beat out other options like Altair, Vega-lite and Bokeh.
 
 ## Sources
