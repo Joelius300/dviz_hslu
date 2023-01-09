@@ -174,12 +174,16 @@ color, to once again show they belong together.
 
 Two horizontal dotted lines visualize the upper and lower thresholds and enable the user to estimate the
 time of crossing. It doesn't need to be more precise at first glance because of the
-inherent inaccuracy of the prediction and the possibility to zoom in if desired.
+inherent inaccuracy of the prediction and the possibility to zoom in if desired. \
+A hover tooltip puts the exact temperature the threshold is set at close to the line and label to reduce eye travel.
 
-On the buffer chart a total of three lines are available to display with two of them being hidden by default,
-as represented by the less opaque legend entry. Although not directly next to the lines, the items
-in the legend follow the logical sort order descending and also represent the relative positions
-of the respective lines (max > avg > min).
+On the buffer chart a total of three lines are available to display with two of them being hidden by default
+(click to show), as represented by the less opaque legend entry.
+Although not directly next to the lines, the items in the legend follow the logical sort order descending and
+also represent the relative positions of the respective lines (max > avg > min).
+
+The y-axes are scaled equally for both charts to provide a common reference (temperatures are from the same system and
+environment) and align the thresholds vertically across charts.
 
 The charts are zoomable and pannable with additional options such as download as image and full-screen.
 
@@ -251,7 +255,7 @@ I decided to stick with the simpler but less customizable option without regrets
 ### Plotly
 
 Plotly is a powerful charting library for creating interactive visualizations using JavaScript.
-Thanks to its good Python bindings and great integration into Streamlit, it was a high contender
+Thanks to its good Python bindings and great integration into Streamlit, it was a strong contender
 from the beginning. With its interactivity it beat out the known framework Matplotlib, and with its
 popularity and appearance in the module it beat out other options like Altair, Vega-lite and Bokeh.
 
