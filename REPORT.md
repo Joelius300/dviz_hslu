@@ -3,25 +3,22 @@
 ## Motivation
 
 In 2019, I got the opportunity to interface the heating unit in our house with a serial port.
-It didn't take long for me to start a real-time dashboard around the data I managed to extract,
-to help me find my footing in the world of web development and build a full-stack application from A to Z.
-The heating unit outputs a stream of CSV data containing the current values of the sensors within.
-At first, I only used this data for the dashboard in real-time, but soon I started storing it in 10 min intervals
-and in lockdown 2020 I switched to archiving in 1 min intervals. \
-This data source allowed me to build a tool for my family with which they can check the current temperatures
+Immediately, I started to build a real-time dashboard around the data I managed to extract,
+to help me find my footing in the world of full-stack web development.
+The tool I built allows my family to check the current temperatures
 without having to go down to the actual heating unit.
 This is especially helpful because it's a wood system, so you have to manually put in wood and
 light it when you see the temperature is running low. \
-I also plan to use this data to train a forecasting model in hopes of further optimizing timing
+In lockdown 2020, I started archiving this data in 1 minute intervals.
+Aside from projects like this, I plan to use it to train a forecasting model in hopes of further optimizing timing
 for firing up the furnace and the amount of wood we use.
 
-However, this dashboard I built is from a time when I understood very little about the heating unit, and therefore it's
+The dashboard I built is from a time when I understood very little about the heating unit, and therefore it's
 just numbers on a screen without much thought behind them and also very boring from a visualization point of view. \
 With this project I would like to change this, learn how to correctly identify needs and how to build an
 intuitive and helpful visualization around the data I collected.
 
-The different components for extracting the data, storing it, making it consumable (API) and displaying it (web UI / dashboard),
-etc. are all [Open Source](https://github.com/Joelius300/HeatingDataMonitor).
+The original dashboard including screenshots is [Open Source on GitHub](https://github.com/Joelius300/HeatingDataMonitor).
 
 ## Process
 
@@ -32,7 +29,7 @@ A brief summary of the process used to develop and create this visualization das
 3. Create rudimentary paper prototype during that meeting and sketch a guideline for a first real prototype
 4. Explore and analyze data to prepare the features that can be used to assist the target audience in their task
 5. Play around with Grafana to try out different chart types and ideas
-6. Create a more thought-out paper prototype and refine iteratively with feedback from same representative as well as professor
+6. Create a more thought-out paper prototype and refine iteratively with feedback from same representative and from our professor
 7. Create Streamlit & Plotly dashboard
     1. Data loading and preparation
     2. Layout with simple charts
@@ -70,7 +67,7 @@ only happen if the user manually fired up and the user wants to see the progress
 
 ## Target audience
 
-The target audience is my family with my dad being the most important stakeholder
+The target audience is my family with my father being the most important stakeholder
 as he manages the heating unit the most. \
 To determine the needs of this user, I had a meeting with him where we discussed
 the current workflows and how decisions are made with the tools he has available at the moment.
