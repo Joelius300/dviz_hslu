@@ -39,7 +39,7 @@ A brief summary of the process used to develop and create this visualization das
 
 ## Data exploration and analysis
 
-Because of previous interest in this dataset, and the usage of it in other modules, a lot of data
+Because of previous interest in this dataset and the usage of it in other modules, a lot of data
 exploration and analysis has already been done. Below are additional explorations listed,
 done specifically for DVIZ.
 
@@ -54,7 +54,7 @@ Here are the meanings of the used columns:
 - **received_time**: Time the system received this state of the heating unit in UTC
 - **buffer_max**: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending)
 - **buffer_min**: Like buffer_max but lowest point of the buffer (usually lowest temperature)
-- **drinking_water**: Temperature in °C of drinking water inside storage water heater at the highest point (highest temperature but mixed fairly well)
+- **drinking_water**: Temperature in °C of drinking water inside storage water heater
 - **heating_up**: Whether the heating unit is in the process of heating up, initiated by hand
 
 ### Heating progression to lowest point
@@ -67,7 +67,7 @@ only happen if the user manually fired up and the user wants to see the progress
 
 ## Target audience
 
-The target audience is my family with my father being the most important stakeholder
+The target audience is my family with my father being the most important stakeholder,
 as he manages the heating unit the most. \
 To determine the needs of this user, I had a meeting with him where we discussed
 the current workflows and how decisions are made with the tools he has available at the moment.
@@ -114,7 +114,7 @@ Those factors include the number of people at home in the next days, whether a b
 the current and predicted weather, and more.
 
 These thresholds alongside with a prediction can be used to recommend an optimal time to fire up the furnace.
-Still, a more detailed view of the data should be available to assist manual decision-making
+Still, a more detailed view showing buffer max and drinking water should be available to assist manual decision-making
 with respect to the factors for which there is no data available.
 
 #### Unknown temperature distribution in buffer
@@ -214,10 +214,8 @@ with the relatively common Deuteranopia, the Green-blindness, the chart looked l
 
 The less common Protanopia and Tritanopia also lead to very similar colors.
 
-Protanopia \
 ![Initial colors for buffer chart with Protanopia](./img/buffer_chart_inital_protanopia.png)
 
-Tritanopia \
 ![Initial colors for buffer chart with Tritanopia](./img/buffer_chart_inital_tritanopia.png)
 
 Looking at a great post from NALDZ GRAPHICS ([Improving Web Design For Color-Blind users](https://naldzgraphics.net/web-design-for-color-blind-users/)),
@@ -228,13 +226,11 @@ I realized that pink might be a good substitute for green that works with orange
 Even though it slightly decreases the contrast and is also less pretty in my opinion,
 it's much clearer under a Deuteranopia or even Protanopia view.
 
-Deuteranopia \
 ![Corrected colors for buffer chart with Deuteranopia](./img/buffer_chart_corrected_deuteranopia.png)
 
-Protanopia \
 ![Corrected colors for buffer chart with Protanopia](./img/buffer_chart_corrected_protanopia.png)
 
-With Tritanopia it doesn't work as well but luckily this is the least common color blindness.
+With Tritanopia it doesn't work as well but luckily this is the least common of the three.
 
 ![Corrected colors for buffer chart with Tritanopia](./img/buffer_chart_corrected_tritanopia.png)
 
@@ -248,8 +244,8 @@ allow even users with complete color blindness to interpret the chart.
 
 Streamlit is advertised as a framework to create data apps quickly and simply.
 Unlike a data story, this dashboard does not rely on extensive customization on the
-layout layer, which a more complex / low-level framework like Dash would allow.  
-Since I had no previous experience or knowledge about either contender (Streamlit vs Dash),
+layout layer, which a more complex and low-level framework like Dash would allow.  
+Since I had no previous experience or knowledge about Streamlit or Dash,
 I decided to stick with the simpler but less customizable option without regrets.
 
 ### Plotly
