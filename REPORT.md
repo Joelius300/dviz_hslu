@@ -40,19 +40,13 @@ A brief summary of the process used to develop and create this visualization das
     4. Refine styling
     5. Final code cleanup (much refactoring done iteratively)
 
-## Data exploration
+## Data exploration and analysis
 
-This dataset has had my interest for quite a while now, and I have already done some data exploration
-and data analysis outside this module. The many hours I have invested into this already were mostly
-for my personal interest and general analysis of the dataset, so I was able to use it in multiple modules.
-In the work summary, I have only written down hours for the data exploration and data analysis where
-DVIZ was an intended primary beneficiary. For the analysis done specifically for other modules I have of
-course still taken the insights into account if they were relevant but did not count the hours towards
-this project.
+Because of previous interest in this dataset, and the usage of it in other modules, a lot of data
+exploration and analysis has already been done. Below are additional explorations listed,
+done specifically for DVIZ.
 
-### Key findings
-
-#### Meaning of columns
+### Meaning of columns
 
 Some columns required investigation to interpret correctly. One of which is the operation state of the furnace
 ("betriebsphase_kessel"), which uses an undocumented discrete number encoding.
@@ -61,15 +55,15 @@ In this project this column was used indirectly by reducing it to a boolean "hea
 Here are the meanings of the used columns:
 
 - **received_time**: Time the system received this state of the heating unit in UTC
-- **buffer_max**: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending).
+- **buffer_max**: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending)
 - **buffer_min**: Like buffer_max but lowest point of the buffer (usually lowest temperature)
 - **drinking_water**: Temperature in °C of drinking water inside storage water heater at the highest point (highest temperature but mixed fairly well)
 - **heating_up**: Whether the heating unit is in the process of heating up, initiated by hand
 
-#### Heating progression to lowest point
+### Heating progression to lowest point
 
 To avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle
-that went as low as possible for the most relevant columns.
+that went as low as possible for the most relevant columns (buffer max and drinking water).
 This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions.
 Heating up in a prediction is invalid because it could
 only happen if the user manually fired up and the user wants to see the progression if they don't fire up.
@@ -243,10 +237,9 @@ With Tritanopia it doesn't work as well but luckily this is the least common col
 
 ![Corrected colors for buffer chart with Tritanopia](./img/buffer_chart_corrected_tritanopia.png)
 
-If all else fails, the consistent order of the line both in the chart and the legend, the meaningful names
+If all else fails, the consistent order of the lines both in the chart and the legend, the meaningful names
 and hover-labels of them, as well as the ability to show and hide a particular line,
 allow even users with complete color blindness to interpret the chart.
-
 
 ## Tools and libraries
 
