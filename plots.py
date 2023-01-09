@@ -4,9 +4,9 @@ from typing import List, Tuple, Literal
 
 import humanize
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.graph_objs import Figure
-import pandas as pd
 
 from data import BUFFER_MIN, BUFFER_AVG, DRINKING_WATER, BUFFER_MAX, PREDICTED_PERIOD
 from shared import is_in_winter_mode, HitTimes, Thresholds, rgba, rgb
