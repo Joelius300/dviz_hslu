@@ -12,9 +12,9 @@ from data import BUFFER_MIN, BUFFER_AVG, DRINKING_WATER, BUFFER_MAX, PREDICTED_P
 from shared import is_in_winter_mode, HitTimes, Thresholds, rgba, rgb
 
 DRINKING_WATER_LABEL = "Drinking water"
-BUFFER_MAX_LABEL = "Buffer max"
-BUFFER_MIN_LABEL = "Buffer min"
-BUFFER_AVG_LABEL = "Buffer avg"
+BUFFER_MAX_LABEL = "Buffer maximum"
+BUFFER_MIN_LABEL = "Buffer minimum"
+BUFFER_AVG_LABEL = "Buffer average"
 
 DRINKING_WATER_COLOR = (0, 0, 139)  # "darkblue"
 BUFFER_MAX_COLOR = (255, 165, 0)  # "orange"
