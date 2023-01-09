@@ -219,6 +219,57 @@ For larger time periods, the data is aggregated before plotting to improve perfo
 If it was an app, notifications would be a great way to let the user know it's time to heat up but
 this is outside the scope of this project and dashboard.
 
+#### Colors
+
+The colors used in the charts have semantic meaning. For higher temperatures (buffer max) a
+warm color was used, while a cold color was used for lower temperatures (buffer min). For the
+drinking water a color associated with water, blue, was used.
+
+To ensure accessibility, I simulated how the charts would look with different kinds
+of color blindness using [Color blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/).
+While visibility and contrast are always important, only the buffer chart features more than one color where confusion between
+colors could occur.
+
+The first set of colors used for the buffer chart were orange, green and light blue.
+
+![Initial colors for buffer chart](./img/buffer_chart_inital.png)
+
+Although it seemed fine with the less extreme kinds (Anomalous Trichromacy),
+with the relatively common Deuteranopia, the Green-blindness, the chart looked like this:
+
+![Initial colors for buffer chart with Deuteranopia](./img/buffer_chart_inital_deuteranopia.png)
+
+The less common Protanopia and Tritanopia also lead to very similar colors.
+
+Protanopia \
+![Initial colors for buffer chart with Protanopia](./img/buffer_chart_inital_protanopia.png)
+
+Tritanopia \
+![Initial colors for buffer chart with Tritanopia](./img/buffer_chart_inital_tritanopia.png)
+
+Looking at a great post from NALDZ GRAPHICS ([Improving Web Design For Color-Blind users](https://naldzgraphics.net/web-design-for-color-blind-users/)),
+I realized that pink might be a good substitute for green that works with orange and blue.
+
+![Corrected colors for buffer chart](./img/buffer_chart_corrected.png)
+
+Even though it slightly decreases the contrast and is also less pretty in my opinion,
+it's much clearer under a Deuteranopia or even Protanopia view.
+
+Deuteranopia \
+![Corrected colors for buffer chart with Deuteranopia](./img/buffer_chart_corrected_deuteranopia.png)
+
+Protanopia \
+![Corrected colors for buffer chart with Protanopia](./img/buffer_chart_corrected_protanopia.png)
+
+With Tritanopia it doesn't work as well but luckily this is the least common color blindness.
+
+![Corrected colors for buffer chart with Tritanopia](./img/buffer_chart_corrected_tritanopia.png)
+
+If all else fails, the consistent order of the line both in the chart and the legend, the meaningful names
+and hover-labels of them, as well as the ability to show and hide a particular line,
+allow even users with complete color blindness to interpret the chart.
+
+
 ## Tools and libraries
 
 ### Streamlit
@@ -237,3 +288,6 @@ from the beginning. With its interactivity it beat out the known framework Matpl
 popularity and appearance in the module it beat out other options like Altair, Vega-lite and Bokeh.
 
 ## Sources
+
+- [Prevalence of Color blindness (colour-blindness.com)](https://www.colour-blindness.com/general/prevalence/)
+- 

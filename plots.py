@@ -19,7 +19,7 @@ BUFFER_AVG_LABEL = "Buffer avg"
 DRINKING_WATER_COLOR = (0, 0, 139)  # "darkblue"
 BUFFER_MAX_COLOR = (255, 165, 0)  # "orange"
 BUFFER_MIN_COLOR = (30, 144, 255)  # "dodgerblue"
-BUFFER_AVG_COLOR = (50, 205, 50)  # "limegreen"
+BUFFER_AVG_COLOR = (230, 160, 288)  # a pink - previously (50, 205, 50)  # "limegreen"
 
 THRESHOLD_LINE_COLOR = "dark gray"
 THRESHOLD_LINE_DASH = "dot"
