@@ -289,9 +289,9 @@ popularity and appearance in the module it beat out other options like Altair, V
 
 ## Sources
 
-- [Improving Web Design For Color-Blind users](https://naldzgraphics.net/web-design-for-color-blind-users/)
-- [Prevalence of Color blindness (colour-blindness.com)](https://www.colour-blindness.com/general/prevalence/)
-- [Deuteranopia - Red-Green Color Blindness (color-blindness.com)](https://www.color-blindness.com/deuteranopia-red-green-color-blindness/)
-- [Color blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/)
+- [Improving Web Design For Color-Blind users (naldzgraphics.net, accessed 09.01.23)](https://naldzgraphics.net/web-design-for-color-blind-users/)
+- [Prevalence of Color blindness (colour-blindness.com, accessed 09.01.23)](https://www.colour-blindness.com/general/prevalence/)
+- [Deuteranopia - Red-Green Color Blindness (color-blindness.com, accessed 09.01.23)](https://www.color-blindness.com/deuteranopia-red-green-color-blindness/)
+- [Color blindness simulator (color-blindness.com, accessed 09.01.23)](https://www.color-blindness.com/coblis-color-blindness-simulator/)
 - [Streamlit](https://streamlit.io/)
 - [Plotly](https://plotly.com/)
