@@ -156,7 +156,12 @@ It also allows exploring times in the past, in which case the end of the selecte
 were the current time, to simulate how the dashboard would look at different times. If it were a productive system,
 data would continuously be added and past periods would be treated differently than current ones.
 
-TODO öppis über d recommended action schribe
+### Recommendation phrase
+
+The recommendation phrase aims to give a clear and direct statement on the
+recommended action in the near future, including the reason for it. \
+This distills the relevant information into a single sentence removing the need
+to always consult a visualization.
 
 ### Temperature charts
 
