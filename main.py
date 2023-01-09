@@ -7,6 +7,11 @@ from data import earliest_time, get_period, projected_hit_times, BUFFER_AVG, BUF
 from plots import create_temperature_line_chart, BUFFER_MAX, DRINKING_WATER, construct_action_phrase
 from shared import Thresholds, PROJECT_TIMEZONE
 
+# This project makes heavy use of constants to increase readability and decrease complexity at the cost
+# of decreased code reusability (for other projects).
+# Note, that this does not really make the application less customizable and
+# the relevant values to change for a customized experience are even neatly arranged and easy to find and update.
+
 PROJECT_TITLE = "Heating unit dashboard"
 
 DEFAULT_DATE_OFFSET = timedelta(days=3)

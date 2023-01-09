@@ -1,31 +1,4 @@
-# DVIZ HSLU HS22 - Joel L
-
-## META - TO REMOVE
-
-7200 - 9000 characters incl. spaces
-
-PUT SOMEWHERE aber am beste äuä i code im fau, das ding wird z läng süsch
-
-```
-# TODO maybe move plot dimensions and ylim into main and make them parameters for the appropriate functions
-# the dimensions of the plot are some of the strongest contenders for parameters instead of constants.
-# But because I employed constants so widely otherwise, which increased readability and decreased complexity at the cost
-# of decreased code reusability (for other projects), I stayed consistent and used constants for plot dimensions too.
-# Note: the application does not really get less customizable and the relevant values to change for a customized
-# experience are even neatly arranged and easy to find and update.
-```
-
-Wäg colorblindness:
-
-<https://www.color-blindness.com/coblis-color-blindness-simulator/>
-
-viläch fingsch no besseri farbe süsch zmingst sägä dasmä dür klicke cha usprobiere und usefinge was was isch.
-zum verwirrig z minimiere hiuft da o das d y-achse limits fix si das züg nid mega resized we d uswau vo lines verändert wird.
-
-### Questions
-
-- how detailed should the data analysis/exploration part be?
-  only the most important parts!
+# DVIZ HSLU HS22 - Joel L.
 
 ## Motivation
 
