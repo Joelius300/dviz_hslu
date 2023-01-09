@@ -38,15 +38,21 @@ st.set_page_config(layout="wide")
 now = datetime.now(PROJECT_TIMEZONE)
 today = now.date()
 
+# initialize session state (once per user session -> only one "now" for consecutive runs, reload to get real now again)
+if 'period_from' not in st.session_state:
+    st.session_state.period_from = now - DEFAULT_DATE_OFFSET
+    st.session_state.period_to = now
+
 st.title(PROJECT_TITLE)
 
 period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = st.columns([2, 1, 1, 1, 1])
 
 with period_col:
     date_period = st.date_input("Period date range",
-                                (today - DEFAULT_DATE_OFFSET, today),
+                                (st.session_state.period_from.date(), st.session_state.period_to.date()),
                                 min_value=earliest_time(),
-                                max_value=today)
+                                max_value=today,
+                                key="date_period_widget")
 
 date_from = date_period[0]
 if len(date_period) < 2:
@@ -57,16 +63,25 @@ else:
     date_to = date_period[1]
 
 with from_time_col:
-    time_from = st.time_input(f"Period start time (on {date_from:{DATE_FORMAT}})")
+    # key needed, otherwise it's derived from the dynamic label text.
+    # also using session state instead of now directly otherwise input from user may be overridden next minute.
+    # see https://github.com/streamlit/streamlit/issues/678
+    time_from = st.time_input(f"Period start time (on {date_from:{DATE_FORMAT}})",
+                              value=st.session_state.period_from.time(), key="time_from_widget")
 
 with to_time_col:
-    time_to = st.time_input(f"Period end time (on {date_to:{DATE_FORMAT}})")
+    # no way to constrain max time directly. Instead of showing an error, we'll just let it slide, we're forecasters :)
+    time_to = st.time_input(f"Period end time (on {date_to:{DATE_FORMAT}})",
+                            value=st.session_state.period_to.time(), key="time_to_widget")
 
 
 period_from = datetime.combine(date_from, time_from)
 period_to = datetime.combine(date_to, time_to)
 period_from = period_from.astimezone(PROJECT_TIMEZONE)
 period_to = period_to.astimezone(PROJECT_TIMEZONE)
+
+st.session_state.period_from = period_from
+st.session_state.period_to = period_to
 
 with lower_threshold_col:
     lower_threshold = st.number_input("Lower threshold", min_value=20, max_value=50, value=DEFAULT_LOWER_THRESHOLD)
