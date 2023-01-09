@@ -50,6 +50,23 @@ intuitive and helpful visualization around the data I collected.
 The different components for extracting the data, storing it, making it consumable (API) and displaying it (web UI / dashboard),
 etc. are all [Open Source](https://github.com/Joelius300/HeatingDataMonitor).
 
+## Process
+
+A brief summary of the process used to develop and create this visualization dashboard:
+
+1. Gather ideas (already had something in mind)
+2. Discuss current process with representative of target audience and identify needs
+3. Create rudimentary paper prototype during that meeting and sketch a guideline for a first real prototype
+4. Explore and analyze data to prepare the features that can be used to assist the target audience in their task
+5. Play around with Grafana to try out different chart types and ideas
+6. Create a more thought-out paper prototype and refine iteratively with feedback from same representative as well as professor
+7. Create Streamlit & Plotly dashboard
+    1. Data loading and preparation
+    2. Layout with simple charts
+    3. Add more complex elements step-by-step
+    4. Refine styling
+    5. Final code cleanup (much refactoring done iteratively)
+
 ## Data exploration
 
 This dataset has had my interest for quite a while now, and I have already done some data exploration
@@ -70,15 +87,15 @@ In this project this column was used indirectly by reducing it to a boolean "hea
 
 Here are the meanings of the used columns:
 
-- received_time: Time my system received this state of the heating unit in UTC
-- buffer_max: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending). Used for determining the stored energy.
-- buffer_min: Like buffer_max but lowest point of the buffer (usually lowest temperature)
-- drinking_water: Temperature in °C of drinking water inside boiler at the highest point (highest temperature)
-- heating_up: Whether the heating unit is in the process of heating up, initiated by hand
+- **received_time**: Time the system received this state of the heating unit in UTC
+- **buffer_max**: Temperature in °C of buffer at the highest point (usually highest temperature because the water is layered by temperature ascending).
+- **buffer_min**: Like buffer_max but lowest point of the buffer (usually lowest temperature)
+- **drinking_water**: Temperature in °C of drinking water inside storage water heater at the highest point (highest temperature but mixed fairly well)
+- **heating_up**: Whether the heating unit is in the process of heating up, initiated by hand
 
 #### Heating progression to lowest point
 
-In order to avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle
+To avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle
 that went as low as possible for the most relevant columns.
 This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions.
 Heating up in a prediction is invalid because it could
@@ -127,7 +144,7 @@ In summer however, the heating circuits are disabled, so only the drinking water
 The thresholds he uses to determine the need for firing up are as follows: \
 If the reference temperature (buffer max or drinking water) is above 40 °C, no action is necessary. \
 If it is below 30 °C, it's certainly necessary to fire up,
-otherwise the house will cool quickly and no more warms showers are possible. \
+otherwise the house will cool quickly and no more warm showers are possible. \
 If it is between, it depends on many more factors.
 Those factors include the number of people at home in the next days, whether a bath is desired,
 the current and predicted weather, and more.
@@ -147,7 +164,7 @@ On the other hand, when the water goes around the storage water heater to heat t
 lose nearly as much energy and the return is often warmer than the water previously at the bottom of the buffer.
 Respectively, this causes positive spikes in buffer min that correlate with
 an increase in the drinking water temperature. \
-Because of these processes happening at different intervals, it's very hard to determine if
+Because of these processes happening at different intervals, it's very hard to determine whether
 the majority of the water in the buffer is closer to the warmest, or closer to the lowest temperature.
 When buffer max and buffer min are substantially different,
 an inspection of the analog hardware sensors spread across the buffer may be necessary to determine the best
@@ -186,7 +203,7 @@ Said prediction continues the line at the same point with the same color (Gestal
 a fan to show the growing uncertainty in the prediction. This fan isn't fully opaque and uses the line's
 color, to once again show they belong together.
 
-Two horizontal dashed lines visualize the upper and lower thresholds and enable the user to estimate the
+Two horizontal dotted lines visualize the upper and lower thresholds and enable the user to estimate the
 time of crossing. It doesn't need to be more precise at first glance because of the
 inherent inaccuracy of the prediction and the possibility to zoom in if desired.
 
