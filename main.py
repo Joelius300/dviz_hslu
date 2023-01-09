@@ -96,10 +96,10 @@ st.session_state.period_from = period_from
 st.session_state.period_to = period_to
 
 with lower_threshold_col:
-    lower_threshold = st.number_input("Lower threshold", min_value=20, max_value=50, value=DEFAULT_LOWER_THRESHOLD)
+    lower_threshold = st.number_input("Lower threshold (°C)", min_value=20, max_value=50, value=DEFAULT_LOWER_THRESHOLD)
 
 with upper_threshold_col:
-    upper_threshold = st.number_input("Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
+    upper_threshold = st.number_input("Upper threshold (°C)", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
 
 # only stop after all the inputs are shown
 if not period_to:
