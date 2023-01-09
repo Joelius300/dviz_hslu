@@ -29,15 +29,15 @@ zum verwirrig z minimiere hiuft da o das d y-achse limits fix si das züg nid me
 
 ## Motivation
 
-In 2019, I got the opportunity to interface the heating unit in our house with a serial port,
-and it didn't take long for me to start a real-time dashboard around the data I managed to extract
+In 2019, I got the opportunity to interface the heating unit in our house with a serial port.
+It didn't take long for me to start a real-time dashboard around the data I managed to extract,
 to help me find my footing in the world of web development and build a full-stack application from A to Z.
 The heating unit outputs a stream of CSV data containing the current values of the sensors within.
 At first, I only used this data for the dashboard in real-time, but soon I started storing it in 10 min intervals
 and in lockdown 2020 I switched to archiving in 1 min intervals. \
 This data source allowed me to build a tool for my family with which they can check the current temperatures
-without having to go down to the actual furnace.
-This is especially helpful because it's a wood furnace, so you have to manually put in wood and
+without having to go down to the actual heating unit.
+This is especially helpful because it's a wood system, so you have to manually put in wood and
 light it when you see the temperature is running low. \
 I also plan to use this data to train a forecasting model in hopes of further optimizing timing
 for firing up the furnace and the amount of wood we use.
@@ -52,9 +52,10 @@ etc. are all [Open Source](https://github.com/Joelius300/HeatingDataMonitor).
 
 ## Target audience
 
-The target audience is my family with my dad being the most important stakeholder as he manages the heating unit the most. \
-To determine the needs of this user, I had a meeting with him, and we discussed the current workflows and how decisions are made
-with the tools he has available at the moment.
+The target audience is my family with my dad being the most important stakeholder
+as he manages the heating unit the most. \
+To determine the needs of this user, I had a meeting with him where we discussed
+the current workflows and how decisions are made with the tools he has available at the moment.
 
 ### Persona
 
@@ -63,17 +64,20 @@ Some key information about my father as the target audience:
 - Good understanding of the heating unit and the processes related to it
 - Tech-savvier than many at their age but certainly needs good UX design to understand dashboard
 - No visual impairments
-- Decisions to make: When to fire up the furnace, when to get more wood (no data available)
+- Decisions to make: When to fire up the furnace (data available) and when to get more wood (no data available)
 - Current tools: Knowledge and experience, basic dashboard built by me
 
 ### Status quo
 
 Before discussing the takeaways from the meeting, here is a brief explanation of the heating system in place.
 
-Our house has both floor heating and radiators. Additionally, a storage water heater stores and maintains 600 liters of hot drinking water for all the water
-outlets in the house. To provide heat to them, a log heating unit is in place which regularly has to be filled up with wood and lit on fire manually. As is custom,
-the heat generated from burning the wood isn't (all) used to supply the heating circuits and storage water heater but is transferred into a buffer storage where
-3000 liters of heating water are kept. The heat from this buffer is used to provide hot water to the consuming systems when the furnace isn't burning.
+Our house has both floor heating and radiators.
+Additionally, a storage water heater stores and maintains 600 liters of hot drinking water for all the
+water outlets in the house. To provide heat to them, a log heating unit is in place which
+regularly has to be filled up with wood and lit on fire manually. As is custom,
+the heat generated from burning the wood isn't (all) used to supply the heating circuits and storage water heater
+but is transferred into a buffer storage where 3000 liters of heating water are kept.
+The heat from this buffer is used to provide hot water to the consuming systems when the furnace isn't burning.
 
 ### Key takeaways
 
@@ -81,13 +85,17 @@ the heat generated from burning the wood isn't (all) used to supply the heating 
 
 My fathers current process to determine whether firing up is necessary using the existing dashboard is as follows:
 
-Often times a gut feeling results in him checking the dashboard to see the current values. In winter, all the systems are active and the main source of heat
-is the buffer. Since the top sensor shows the approximate maximum temperature, it is a hard limit for heating up other systems and used as the main reference
-to determine if firing up is necessary. In summer however, the heating circuits are disabled, so only the drinking water is relevant and used as reference directly.
+Often times a gut feeling results in him checking the dashboard to see the current values.
+In winter, all the systems are active and the main source of heat is the buffer.
+Since the top sensor shows the approximate maximum temperature, it is a hard limit for heating up
+other systems and used as the main reference to determine if firing up is necessary.
+In summer however, the heating circuits are disabled, so only the drinking water is relevant and used as reference directly.
 The thresholds he uses to determine the need for firing up are as follows: \
 If the reference temperature (buffer max or drinking water) is above 40 °C, no action is necessary. \
-If it is below 30 °C, it's certainly necessary to fire up, otherwise the house will cool quickly and no more warms showers are possible. \
-If it is between, it depends on many more factors. Those factors include the number of people at home in the next days, whether a bath is desired,
+If it is below 30 °C, it's certainly necessary to fire up,
+otherwise the house will cool quickly and no more warms showers are possible. \
+If it is between, it depends on many more factors.
+Those factors include the number of people at home in the next days, whether a bath is desired,
 the current and predicted weather, and more.
 
 These thresholds alongside with a prediction can be used to recommend an optimal time to fire up the furnace.
@@ -96,14 +104,18 @@ with respect to the factors for which there is no data available.
 
 #### Unknown temperature distribution in buffer
 
-For heating up other systems, hot water is taken from the top of the buffer (flow), pushed through the heating circuits and returned into the bottom of the
-buffer (return). When heating up the floor heating and the radiators, a lot of heat is lost, and the return is much colder than the flow leading to a low temperature
-at the bottom of the buffer where the bottom sensor is. This can lead to negative spikes in buffer min before the water mixes and layers again.
+For heating up other systems, hot water is taken from the top of the buffer (flow), pushed through the heating circuits
+and returned into the bottom of the buffer (return). When heating up the floor heating and the radiators,
+a lot of heat is lost, and the return is much colder than the flow leading to a low temperature
+at the bottom of the buffer where the bottom sensor is. This can lead to negative spikes in buffer min
+before the water mixes and layers again.
 On the other hand, when the water goes around the storage water heater to heat the water inside, it doesn't
 lose nearly as much energy and the return is often warmer than the water previously at the bottom of the buffer.
-Respectively, this causes positive spikes in buffer min that correlate with an increase in the drinking water temperature. \
-Because of these processes happening at different intervals, it's very hard to determine if the majority of the water in the buffer is closer to the warmest,
-or closer to the lowest temperature. When buffer max and buffer min are substantially different,
+Respectively, this causes positive spikes in buffer min that correlate with
+an increase in the drinking water temperature. \
+Because of these processes happening at different intervals, it's very hard to determine if
+the majority of the water in the buffer is closer to the warmest, or closer to the lowest temperature.
+When buffer max and buffer min are substantially different,
 an inspection of the analog hardware sensors spread across the buffer may be necessary to determine the best
 course of action, especially when the upper threshold has already been crossed.
 
@@ -125,8 +137,9 @@ this project.
 
 #### Meaning of columns
 
-Some columns required investigation to interpret correctly. One of which is the operation state of the furnace ("betriebsphase_kessel"), which uses an undocumented
-discrete number encoding. In this project this column was used indirectly by reducing it to a boolean "heating_up" to rectify impossible predictions.
+Some columns required investigation to interpret correctly. One of which is the operation state of the furnace
+("betriebsphase_kessel"), which uses an undocumented discrete number encoding.
+In this project this column was used indirectly by reducing it to a boolean "heating_up" to rectify impossible predictions.
 
 Here are the meanings of the used columns:
 
@@ -138,8 +151,10 @@ Here are the meanings of the used columns:
 
 #### Heating progression to lowest point
 
-In order to avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle that went as low as possible for the most relevant columns.
-This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions. Heating up in a prediction is invalid because it could
+In order to avoid showing impossible predictions, an analysis was done to determine a suiting past heating cycle
+that went as low as possible for the most relevant columns.
+This heating progression (highest to lowest point) is then used to replace invalid parts of predicted progressions.
+Heating up in a prediction is invalid because it could
 only happen if the user manually fired up and the user wants to see the progression if they don't fire up.
 
 ## Visualization breakdown
