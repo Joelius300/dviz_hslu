@@ -61,7 +61,8 @@ def create_temperature_line_chart(data: pd.DataFrame, predicted: pd.DataFrame,
 
     :param data: The data in the past (up to now) with a time-index and the columns specified in 'columns'.
     :param predicted: The predicted data following directly after 'data' also with a time-index and the same columns.
-    :param columns: List of columns to plot (can also be a single column as string).
+    :param columns: Either a single string to represent a single column, or a list of string-bool tuples each containing
+           The name of a column and whether the line should be hidden initially.
     :param ylim: The inital y-limits to set. Must be a list with two items: [lower_limit, upper_limit]
     :param thresholds: The temperature thresholds to plot.
     :param plot_height: The height of the chart in pixels.

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 
 import numpy as np
 import streamlit as st
@@ -18,7 +18,7 @@ DEFAULT_DATE_OFFSET = timedelta(days=3)
 DEFAULT_LOWER_THRESHOLD = 30
 DEFAULT_UPPER_THRESHOLD = 40
 
-# date_input always formats as %Y/%m/%d apparently so we cope: https://github.com/streamlit/streamlit/issues/5234
+# st.date_input always formats as %Y/%m/%d apparently so we cope: https://github.com/streamlit/streamlit/issues/5234
 DATE_FORMAT = "%Y/%m/%d"
 
 # plot dimensions in pixels for two column layout in wide mode.
@@ -34,6 +34,7 @@ DEFAULT_YLIM = [20, 90]  # °C - same system and environment, so the limits shou
 SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS = timedelta(hours=1)
 
 st.set_page_config(layout="wide")
+st.title(PROJECT_TITLE)
 
 now = datetime.now(PROJECT_TIMEZONE)
 today = now.date()
@@ -43,8 +44,7 @@ if 'period_from' not in st.session_state:
     st.session_state.period_from = now - DEFAULT_DATE_OFFSET
     st.session_state.period_to = now
 
-st.title(PROJECT_TITLE)
-
+# get user inputs
 period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = st.columns([2, 1, 1, 1, 1])
 
 with period_col:
@@ -74,7 +74,6 @@ with to_time_col:
     time_to = st.time_input(f"Period end time (on {date_to:{DATE_FORMAT}})",
                             value=st.session_state.period_to.time(), key="time_to_widget")
 
-
 period_from = datetime.combine(date_from, time_from)
 period_to = datetime.combine(date_to, time_to)
 period_from = period_from.astimezone(PROJECT_TIMEZONE)
@@ -103,8 +102,10 @@ current, data, predicted = get_period(period_from, period_to)
 thresholds = Thresholds(upper_threshold, lower_threshold)
 hit_times = projected_hit_times(data, predicted, thresholds)
 
+# recommendation phrase
 st.markdown(construct_action_phrase(hit_times, period_to, thresholds, SUGGESTED_FIRE_UP_TIME_BEFORE_THRESHOLD_CROSS))
 
+# temperature charts
 col_stored_energy, col_drinking_water = st.columns(2)
 
 with col_stored_energy:
