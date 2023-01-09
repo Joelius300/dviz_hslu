@@ -43,31 +43,28 @@ def load_data():
     Loads and prepares the dataset. Times are shifted by 1 year to get data from early 2021 to late 2023
     which allows for fake-predictions using real data and still allows exploration in the past.
     """
-    heating_data = pd.read_csv(CSV_PATH)
-    timestamps = pd.to_datetime(heating_data.pop(TIME), utc=True)
-    timestamps = timestamps + TIME_OFFSET  # shift everything 1 year into the future to have fake prediction values
-    heating_data.index = timestamps
-    heating_data.index = heating_data.index.tz_convert(PROJECT_TIMEZONE)
-    heating_data[BUFFER_AVG] = (heating_data[BUFFER_MAX] + heating_data[BUFFER_MIN]) / 2
-    return heating_data.sort_index()
+    heating_data = _load_time_dataset(CSV_PATH)
+    # shift everything 1 year into the future to have fake prediction values
+    heating_data.index = heating_data.index + TIME_OFFSET
+    return heating_data
 
 
 @st.cache
 def load_prediction_templates():
     """Loads the prediction templates for summer and winter (returned in a 2-tuple in that order)."""
 
-    def load_prediction(path) -> pd.DataFrame:
-        # TODO extract redundancies with load_data()
-        pred = pd.read_csv(path)
-        pred.index = pd.to_datetime(pred.pop(TIME), utc=True)
-        pred.index = pred.index.tz_convert(PROJECT_TIMEZONE)
-        pred[BUFFER_AVG] = (pred[BUFFER_MAX] + pred[BUFFER_MIN]) / 2
-        return pred
-
-    summer = load_prediction(SUMMER_PREDICTION_CSV_PATH)
-    winter = load_prediction(WINTER_PREDICTION_CSV_PATH)
+    summer = _load_time_dataset(SUMMER_PREDICTION_CSV_PATH)
+    winter = _load_time_dataset(WINTER_PREDICTION_CSV_PATH)
 
     return summer, winter
+
+
+def _load_time_dataset(csv_path: str):
+    df = pd.read_csv(csv_path)
+    df.index = pd.to_datetime(df.pop(TIME), utc=True)
+    df.index = df.index.tz_convert(PROJECT_TIMEZONE)
+    df[BUFFER_AVG] = (df[BUFFER_MAX] + df[BUFFER_MIN]) / 2
+    return df.sort_index()
 
 
 @st.cache
