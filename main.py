@@ -40,6 +40,7 @@ now = datetime.now(PROJECT_TIMEZONE)
 today = now.date()
 
 # initialize session state (once per user session -> only one "now" for consecutive runs, reload to get real now again)
+# Only necessary because Streamlit runs the script again DURING date range selection, no clue why you would do that..
 if 'period_from' not in st.session_state:
     st.session_state.period_from = now - DEFAULT_DATE_OFFSET
     st.session_state.period_to = now
@@ -48,18 +49,20 @@ if 'period_from' not in st.session_state:
 period_col, from_time_col, to_time_col, lower_threshold_col, upper_threshold_col = st.columns([2, 1, 1, 1, 1])
 
 with period_col:
+    if st.session_state.period_to:
+        date_period_value = (st.session_state.period_from, st.session_state.period_to)
+    else:  # user is currently selecting a range but only has selected the start of it.
+        date_period_value = st.session_state.date_period_widget  # no change, this is Streamlit's value of the widget
+
     date_period = st.date_input("Period date range",
-                                (st.session_state.period_from.date(), st.session_state.period_to.date()),
+                                date_period_value,
                                 min_value=earliest_time(),
                                 max_value=today,
                                 key="date_period_widget")
 
-date_from = date_period[0]
-if len(date_period) < 2:
-    # this treats clicking just one day and then deselecting the same as double-clicking that day. Alternatively,
-    # execution could be halted with an error here. No idea why streamlit runs again with an incomplete range selected.
-    date_to = date_from
-else:
+date_from, date_to = date_period[0], None
+if len(date_period) >= 2:
+    # No idea why Streamlit runs again with an incomplete range selected, makes absolutely no sense to me.
     date_to = date_period[1]
 
 with from_time_col:
@@ -70,14 +73,24 @@ with from_time_col:
                               value=st.session_state.period_from.time(), key="time_from_widget")
 
 with to_time_col:
+    formatted_date = f"{date_to:{DATE_FORMAT}}" if date_to else "-"
+    if st.session_state.period_to:
+        time_to_value = st.session_state.period_to.time()
+    else:  # user is still selecting range, no period_to available -> don't change, just use previous internal value
+        time_to_value = st.session_state.time_to_widget
+
     # no way to constrain max time directly. Instead of showing an error, we'll just let it slide, we're forecasters :)
-    time_to = st.time_input(f"Period end time (on {date_to:{DATE_FORMAT}})",
-                            value=st.session_state.period_to.time(), key="time_to_widget")
+    time_to = st.time_input(f"Period end time (on {formatted_date})",
+                            value=time_to_value, key="time_to_widget")
 
 period_from = datetime.combine(date_from, time_from)
-period_to = datetime.combine(date_to, time_to)
 period_from = period_from.astimezone(PROJECT_TIMEZONE)
-period_to = period_to.astimezone(PROJECT_TIMEZONE)
+
+if date_to:
+    period_to = datetime.combine(date_to, time_to)
+    period_to = period_to.astimezone(PROJECT_TIMEZONE)
+else:
+    period_to = None
 
 st.session_state.period_from = period_from
 st.session_state.period_to = period_to
@@ -87,6 +100,11 @@ with lower_threshold_col:
 
 with upper_threshold_col:
     upper_threshold = st.number_input("Upper threshold", min_value=20, max_value=50, value=DEFAULT_UPPER_THRESHOLD)
+
+# only stop after all the inputs are shown
+if not period_to:
+    st.write("Please select a range.")
+    st.stop()
 
 if (period_to - period_from) < np.timedelta64(5, "m"):
     st.write("Please select a longer period.")
